@@ -49,7 +49,11 @@ Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo
   "treino_feito": {"corrida": true, "musculacao": false, "obs": "texto livre",
     "resultado": {"fonte": "Zepp|Samsung Health|manual|Strava", "distancia_km": 12.04, "tempo": "1:10:12", "pace_medio": "5:50",
                   "fc_media": 156, "fc_max": 176, "calorias": 890, "salvo_em": "ISO",
-                  "parciais": [{"n": 1, "dist_km": 1, "pace": "6:36", "fc": 138}]}},   // parciais = km ou voltas/tiros
+                  "parciais": [{"n": 1, "dist_km": 1, "pace": "6:36", "fc": 138}]},   // parciais = km ou voltas/tiros
+    "prints": [{"id": "<asset id 32 hex>", "enviado_em": "ISO"}],   // prints guardados no painel (assets)
+    "print_pendente": true,                                          // print guardado e ainda não lido
+    "analise": {"nota": 7.8, "confianca": "alta|média|baixa", "resumo": "...", "pontos_fortes": ["..."],
+                "ajustes": ["..."], "proximo": "...", "gerado_em": "ISO", "origem": "painel|claude"}},
   "notas": ""
 }
 ```
@@ -62,8 +66,11 @@ Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo
 ### Painel
 - Fonte: `painel/painel.template.html`; `python3 scripts/gerar_painel.py` gera `painel/index.html` embutindo `data/musculacao.json`, `data/calendario.json` e `data/perfil.json`.
 - Mudou o plano ou o perfil → regenerar e republicar com a ferramenta `Artifact` passando `url` acima (nunca publicar sem `url`, senão cria outro painel).
-- Capacidades: `db` (só o dono/editores escrevem) e `sample` (botão "Calcular macros" usa o Claude da própria conta do JP).
+- Capacidades: `db` (só o dono/editores escrevem), `sample` (Calcular macros, ler print quando a tela permite, análise do treino — usa o Claude da conta do JP) e `assets` (prints guardados). Ao republicar, repassar as três em `capabilities` ou omitir para manter.
+- Compartilhamento: em 28/09 o painel estava como "qualquer pessoa com o link" (leitura). Só o JP escreve.
 
+- **Prints pendentes (fazer ao abrir toda conversa):** procurar `treino_feito.print_pendente: true` nos dias recentes. Para cada print, baixar com `Artifact` `action: "read"`, `url` do painel e `path: <asset id>`; ler a imagem; gravar `treino_feito.resultado` (formato acima), `print_pendente: false` e uma `analise` (origem "claude") com os mesmos critérios do painel. Motivo: no navegador do celular o painel não consegue mandar imagem para o Claude (sample sem suporte a imagens nessa tela), então o print fica guardado e a leitura é feita na conversa.
+- Análise/nota: botão "Analisar treino e dar nota" no painel (usa `sample`, só texto). Critérios, em ordem de peso: estrutura e distância cumpridas; ritmo de cada bloco dentro da faixa (rápido demais também é desvio); consistência e fim de treino; FC coerente; relato do atleta. Nota 0–10 com uma casa decimal.
 - Treino: o card mostra **Previsto x Realizado** lado a lado. O JP pode enviar print do Samsung Health/Zepp (lido pelo `sample` com imagens) ou digitar. Cada parcial é marcada "no alvo / rápido / lento" (±3 s) contra o pace do bloco do plano (por km acumulado; tiros casados pela distância ±12%). Se ele mandar o print na conversa, extrair e gravar em `treino_feito.resultado` no mesmo formato.
 - Peso: o painel tem a seção "Peso da manhã" no topo, com campo de data (padrão = hoje) — permite lançar um dia esquecido. Quando o JP disser o peso na conversa, gravar no dia certo com `peso_hora`.
 

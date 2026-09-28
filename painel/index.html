@@ -103,6 +103,18 @@ textarea { resize: vertical; min-height: 64px; }
 .manual label { display: grid; gap: 3px; }
 .linkish { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: .85rem; }
 
+.thumbs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.thumbs a { display: block; width: 64px; height: 96px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); background: var(--bg); }
+.thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.grade { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; background: var(--bg); }
+.grade-top { display: flex; gap: 14px; align-items: center; }
+.grade-n { font-family: var(--display); font-size: 3rem; line-height: .9; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 2.4ch; }
+.grade-n small { font-size: 1rem; color: var(--muted); font-weight: 500; }
+.grade-n.hi { color: var(--ok); } .grade-n.mid { color: var(--carb); } .grade-n.lo { color: var(--over); }
+.grade h4 { margin: 0; font-size: .72rem; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+.grade ul { margin: 2px 0 0; padding-left: 18px; font-size: .9rem; display: grid; gap: 2px; }
+.grade p { margin: 0; font-size: .92rem; }
+
 /* Macros */
 .macros { display: grid; gap: 12px; }
 .macro { display: grid; gap: 4px; }
@@ -215,6 +227,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         <div class="done-row" id="donerow"></div>
         <label class="label" for="treino-obs">Como foi</label>
         <textarea id="treino-obs" placeholder="Ex.: calor forte, perna pesada no fim."></textarea>
+        <div id="analise"></div>
       </div>
     </div>
   </section>
@@ -277,7 +290,7 @@ let sel = hojeISO();
 let registros = {};          // id -> doc body
 let metaBase = PERFIL.macros_base;
 let metasCfg = PERFIL.metas_por_tipo || {};
-let db = null, sample = null;
+let db = null, sample = null, assetsNs = null;
 
 /* ---------- corrida ---------- */
 function blocoKm(txt) {
@@ -331,6 +344,7 @@ function renderPlano() {
   });
   if (document.activeElement !== $("treino-obs")) $("treino-obs").value = tf.obs || "";
   renderResultado();
+  renderAnalise();
 }
 
 /* ---------- realizado ---------- */
@@ -353,10 +367,20 @@ function avaliar(paceSeg, lo, hi) {
   if (paceSeg > hi + 3) return `<span class="tag slow">lento</span>`;
   return `<span class="tag ok">no alvo</span>`;
 }
+function htmlPrints() {
+  const tf = registros[sel]?.treino_feito || {}, ps = tf.prints || [];
+  if (!ps.length) return "";
+  return `<div class="thumbs">${ps.map((x) => `<a href="/_blob/${esc(x.id)}" target="_blank" rel="noopener" aria-label="Abrir print"><img src="/_blob/${esc(x.id)}" alt="Print do treino" loading="lazy"></a>`).join("")}
+    ${tf.print_pendente ? `<span class="pending">Print guardado · aguardando leitura</span>` : ""}</div>`;
+}
 function renderResultado() {
   const p = CAL[sel] || {}, r = registros[sel]?.treino_feito?.resultado;
   const el = $("result");
-  if (!r) { el.innerHTML = p.corrida ? `<p class="note">Nenhum resultado ainda. Envie o print do Samsung Health ou do Zepp, ou digite os números.</p>` : ""; renderResForm(); return; }
+  if (!r) {
+    const pend = registros[sel]?.treino_feito?.print_pendente;
+    el.innerHTML = htmlPrints() + ((p.corrida || p.musculacao) && !pend ? `<p class="note">Nenhum resultado ainda. Envie o print do Samsung Health ou do Zepp, ou digite os números.</p>` : pend ? `<p class="note">Quando você falar com o Claude na conversa, ele lê este print, preenche os números e faz a análise. Ou digite os números agora.</p>` : "");
+    renderResForm(); return;
+  }
   const tempo = segs(r.tempo), paceM = r.pace_medio ? segs(r.pace_medio) : (r.distancia_km && tempo ? tempo / r.distancia_km : 0);
   const st = [
     [r.distancia_km ? String(r.distancia_km).replace(".", ",") : "–", "km"],
@@ -380,6 +404,7 @@ function renderResultado() {
         return `<tr><td>${esc(x.n ?? i+1)}</td><td>${String(d).replace(".", ",")} km</td><td>${esc(x.pace || "–")}</td><td>${esc(x.fc ?? "–")}</td><td>${tag}</td></tr>`;
       }).join("") + `</table></div>`;
   }
+  html += htmlPrints();
   html += `<div class="note">Fonte: ${esc(r.fonte || "manual")}${r.salvo_em ? ` · salvo em ${fmtBR(r.salvo_em.slice(0,10))}` : ""} · <button type="button" class="linkish" id="res-del">apagar resultado</button></div>`;
   el.innerHTML = html;
   $("res-del").onclick = (ev) => {
@@ -395,7 +420,7 @@ function renderResForm() {
   const p = CAL[sel] || {}, el = $("resform");
   if (resRascunho && el.querySelector("#rv-ok")) return;   // não apagar o que está sendo editado
   if (lendoPrint && el.querySelector("#drop")) return;
-  if (!p.corrida && !resRascunho) { el.innerHTML = ""; return; }
+  if (!p.corrida && !p.musculacao && !resRascunho) { el.innerHTML = ""; return; }
   if (resRascunho) {
     const r = resRascunho;
     el.innerHTML = `<div class="preview"><div class="label">Lido do print · confira antes de salvar</div>
@@ -413,7 +438,7 @@ function renderResForm() {
       const out = { ...resRascunho, distancia_km: d, tempo: t, fc_media: Number($("rv-f").value) || null, fc_max: Number($("rv-x").value) || null, salvo_em: new Date().toISOString() };
       if (d && t && !out.pace_medio) out.pace_medio = hms(segs(t) / d);
       resRascunho = null; $("resform").innerHTML = "";
-      salvar({ treino_feito: { ...(registros[sel]?.treino_feito || {}), corrida: true, resultado: out } });
+      salvar({ treino_feito: { ...(registros[sel]?.treino_feito || {}), corrida: true, resultado: out, print_pendente: false } });
     };
     $("rv-no").onclick = () => { resRascunho = null; el.innerHTML = ""; renderResForm(); };
     return;
@@ -441,31 +466,122 @@ Treino planejado (só para contexto, não invente dados a partir dele): ${plano}
 Responda somente com JSON neste formato (use null no que não aparecer):
 {"fonte":"Samsung Health|Zepp","distancia_km":12.05,"tempo":"1:10:32","pace_medio":"5:51","fc_media":156,"fc_max":178,"calorias":890,"parciais":[{"n":1,"dist_km":1,"pace":"6:35","fc":141}]}
 "parciais" = as parciais por km ou as voltas/tiros listadas, na ordem; "dist_km" de cada uma em km (ex.: 0.4 para um tiro de 400 m). Tempo no formato h:mm:ss ou mm:ss; pace em min:seg por km.`;
-async function lerPrints(files) {
-  const st = () => $("rstatus");
-  if (!files || !files.length) return;
-  if (!sample) { st().textContent = "A leitura automática não está disponível aqui. Use “Digitar os números” ou mande o print na conversa com o Claude."; return; }
-  const caps = await sample.limits().catch(() => null);
-  if (!caps?.images) { st().textContent = "Esta visualização não aceita imagens. Use “Digitar os números” ou mande o print na conversa."; return; }
-  const lista = [...files].slice(0, caps.images.maxCount);
-  resCtl?.abort(); resCtl = new AbortController();
-  st().textContent = "Lendo o print… (pode levar até um minuto)";
-  lendoPrint = true;
-  const c = CAL[sel]?.corrida;
-  const plano = c ? `${c.tipo}, ${c.km || ""} km: ${c.estrutura.join("; ")}` : "sem corrida planejada";
+async function encolher(file) {
+  // reduz para no máximo 1600 px no lado maior, JPEG — prints de celular ficam com ~200-400 KB
   try {
-    const r = await sample.json(PROMPT_PRINT(plano), { images: lista, signal: resCtl.signal });
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+    cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+    return await new Promise((ok) => cv.toBlob((bl) => ok(bl || file), "image/jpeg", 0.85));
+  } catch { return file; }
+}
+async function lerPrints(files) {
+  const st = (t) => { const e = $("rstatus"); if (e) e.textContent = t; };
+  if (!files || !files.length) return;
+  const k = sel;
+  lendoPrint = true;
+  try {
+    st("Preparando as imagens…");
+    const blobs = await Promise.all([...files].slice(0, 6).map(encolher));
+    // 1) guardar os prints junto do treino
+    let guardados = [];
+    if (assetsNs) {
+      st("Guardando o print…");
+      for (const bl of blobs) {
+        try { const up = await assetsNs.upload(bl, { type: "image/jpeg" }); guardados.push({ id: up.id, enviado_em: new Date().toISOString() }); }
+        catch (e) { st("Não consegui guardar o print (" + (e?.code || "erro") + ")."); }
+      }
+      if (guardados.length) {
+        const tf = registros[k]?.treino_feito || {};
+        await salvar({ treino_feito: { ...tf, prints: [...(tf.prints || []), ...guardados], print_pendente: true } }, k);
+      }
+    }
+    // 2) tentar ler aqui mesmo, se esta tela permitir imagens
+    const caps = sample ? await sample.limits().catch(() => null) : null;
+    if (!caps?.images) {
+      st(guardados.length ? "Print guardado. Esta tela não deixa o Claude ler imagens; diga ao Claude na conversa “leia o print de hoje” ou digite os números." : "Esta tela não aceita imagens. Mande o print na conversa com o Claude ou digite os números.");
+      return;
+    }
+    resCtl?.abort(); resCtl = new AbortController();
+    st("Lendo o print… (pode levar até um minuto)");
+    const c = CAL[k]?.corrida;
+    const plano = c ? `${c.tipo}, ${c.km || ""} km: ${c.estrutura.join("; ")}` : "sem corrida planejada";
+    const r = await sample.json(PROMPT_PRINT(plano), { images: blobs.slice(0, caps.images.maxCount), signal: resCtl.signal });
     const num = (v) => (v == null || v === "" ? null : Number(v));
     resRascunho = {
       fonte: String(r?.fonte || "print"), distancia_km: num(r?.distancia_km), tempo: r?.tempo || null, pace_medio: r?.pace_medio || null,
       fc_media: num(r?.fc_media), fc_max: num(r?.fc_max), calorias: num(r?.calorias),
       parciais: (r?.parciais || []).map((x, i) => ({ n: x.n ?? i + 1, dist_km: num(x.dist_km) ?? 1, pace: x.pace || null, fc: num(x.fc) })),
     };
-    renderResForm();
+    lendoPrint = false; $("resform").innerHTML = ""; renderResForm();
   } catch (e) {
-    const msg = { cancelled: "", not_granted: "Sem permissão para usar o Claude nesta página.", rate_limited: "Muitas leituras seguidas. Tente em alguns minutos.", image_rejected: "Não consegui abrir essa imagem. Tente outro print (JPG ou PNG).", invalid_json: "Não consegui ler os números desse print. Tente um print mais nítido ou digite os números." }[e?.code];
-    st().textContent = msg ?? "A leitura falhou. Tente de novo ou digite os números.";
+    const msg = { cancelled: "", not_granted: "Sem permissão para usar o Claude nesta página.", rate_limited: "Muitas leituras seguidas. Tente em alguns minutos.", image_rejected: "Não consegui abrir essa imagem. Tente outro print (JPG ou PNG).", invalid_json: "Não consegui ler os números desse print. Digite os números ou peça ao Claude na conversa." }[e?.code];
+    st(msg ?? "A leitura falhou. O print ficou guardado; peça ao Claude na conversa ou digite os números.");
   } finally { lendoPrint = false; }
+}
+
+/* ---------- análise e nota ---------- */
+let analisando = false, anCtl = null;
+function renderAnalise() {
+  const el = $("analise"); if (!el || analisando) return;
+  const p = CAL[sel] || {}, tf = registros[sel]?.treino_feito || {}, a = tf.analise;
+  if (!p.corrida && !p.musculacao && !a) { el.innerHTML = ""; return; }
+  const pode = tf.resultado || tf.obs || tf.corrida || tf.musculacao;
+  let html = "";
+  if (a) {
+    const n = Number(a.nota), cls = n >= 8 ? "hi" : n >= 6 ? "mid" : "lo";
+    const lista = (t, xs) => xs?.length ? `<div><h4>${t}</h4><ul>${xs.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+    html += `<div class="grade"><div class="grade-top"><div class="grade-n ${cls}">${esc(String(a.nota).replace(".", ","))}<small>/10</small></div><p>${esc(a.resumo)}</p></div>
+      ${lista("O que foi bem", a.pontos_fortes)}${lista("O que ajustar", a.ajustes)}
+      ${a.proximo ? `<div><h4>Para o próximo treino</h4><p>${esc(a.proximo)}</p></div>` : ""}
+      <div class="note">${a.confianca && a.confianca !== "alta" ? `Confiança ${esc(a.confianca)} (faltam dados) · ` : ""}Análise de ${a.gerado_em ? fmtBR(a.gerado_em.slice(0, 10)) : ""}${a.origem === "claude" ? " · feita na conversa" : ""}</div></div>`;
+  }
+  if (sample && pode) html += `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="button" class="${a ? "" : "primary"}" id="an-go">${a ? "Refazer análise" : "Analisar treino e dar nota"}</button><span class="status" id="an-st" role="status"></span></div>`;
+  else if (!a && (p.corrida || p.musculacao)) html += `<p class="note">${pode ? "A análise com nota aparece aqui. Peça ao Claude na conversa se o botão não aparecer." : "Depois de lançar o resultado ou escrever como foi, a análise com nota aparece aqui."}</p>`;
+  el.innerHTML = html;
+  const b = $("an-go"); if (b) b.onclick = analisar;
+}
+function contextoTreino(k) {
+  const p = CAL[k] || {}, reg = registros[k] || {}, tf = reg.treino_feito || {};
+  const prox = [1, 2, 3].map((n) => addDays(k, n)).find((d) => CAL[d]?.corrida || CAL[d]?.musculacao);
+  const tot = totais(reg), meta = metaDia();
+  return {
+    atleta: "Homem, 35 anos, 183 cm, ~87 kg, treina às 17h em Natal-RN (calor). Objetivo: desempenho, mantendo músculo e baixo % de gordura.",
+    prova: `Meia Maratona PRF em 08/11/2026 (faltam ${diffDays(k, RACE)} dias)`,
+    dia: fmtBR(k),
+    planejado: { corrida: p.corrida || null, musculacao: p.musculacao ? MUSC[p.musculacao].nome : null },
+    realizado: { corrida_marcada: !!tf.corrida, musculacao_marcada: !!tf.musculacao, resultado: tf.resultado || null, relato: tf.obs || "" },
+    alimentacao_do_dia: { consumido: { kcal: r0(tot.kcal), carb_g: r0(tot.carb_g), prot_g: r0(tot.prot_g), gord_g: r0(tot.gord_g) }, meta },
+    proximo_treino: prox ? { dia: fmtBR(prox), corrida: CAL[prox].corrida || null, musculacao: CAL[prox].musculacao ? MUSC[CAL[prox].musculacao].nome : null } : null,
+  };
+}
+const PROMPT_ANALISE = (ctx) => `Você é treinador de corrida e força. Avalie o treino realizado contra o planejado e dê uma nota de 0 a 10 (uma casa decimal).
+Critérios, nesta ordem de peso: 1) cumprimento da estrutura e da distância planejadas; 2) ritmo de cada bloco dentro da faixa-alvo (acima do alvo também é desvio: correr rápido demais num treino leve é erro); 3) consistência entre parciais e controle de fim de treino; 4) coerência da frequência cardíaca com o esforço; 5) o relato do atleta (dor, calor, cansaço). Se faltarem dados, avalie com o que existe e rebaixe "confianca". Seja honesto e específico, citando números. Português do Brasil, frases curtas.
+Dados: ${JSON.stringify(ctx)}
+Responda somente com JSON:
+{"nota":8.5,"confianca":"alta|média|baixa","resumo":"1-2 frases","pontos_fortes":["..."],"ajustes":["..."],"proximo":"1 recomendação concreta para o próximo treino ou para a alimentação/recuperação de hoje"}`;
+async function analisar() {
+  if (!sample) return;
+  const k = sel, st = (t) => { const e = $("an-st"); if (e) e.textContent = t; };
+  anCtl?.abort(); anCtl = new AbortController();
+  const b = $("an-go"); if (b) b.disabled = true;
+  st("Analisando… (até um minuto)");
+  analisando = true;
+  try {
+    const a = await sample.json(PROMPT_ANALISE(contextoTreino(k)), { signal: anCtl.signal, cache: false });
+    const nota = Math.max(0, Math.min(10, Math.round(Number(a?.nota) * 10) / 10));
+    if (!Number.isFinite(nota) || !a?.resumo) throw { code: "invalid_json" };
+    const an = { nota, confianca: String(a.confianca || "média"), resumo: String(a.resumo), pontos_fortes: (a.pontos_fortes || []).map(String).slice(0, 5),
+      ajustes: (a.ajustes || []).map(String).slice(0, 5), proximo: a.proximo ? String(a.proximo) : "", gerado_em: new Date().toISOString(), origem: "painel" };
+    analisando = false;
+    await salvar({ treino_feito: { ...(registros[k]?.treino_feito || {}), analise: an } }, k);
+  } catch (e) {
+    analisando = false;
+    const msg = { cancelled: "", not_granted: "Sem permissão para usar o Claude nesta página.", rate_limited: "Muitas análises seguidas. Tente em alguns minutos.", invalid_json: "A análise veio incompleta. Tente de novo." }[e?.code];
+    renderAnalise(); st(msg ?? "A análise falhou. Tente de novo ou peça ao Claude na conversa.");
+  }
 }
 
 /* ---------- dieta ---------- */
@@ -677,8 +793,8 @@ render();
 (async () => {
   const c = window.claude;
   if (!c?.use) { $("offline").hidden = false; return; }
-  const [d, s] = await Promise.all([c.use("db"), c.use("sample")]);
-  sample = s;
+  const [d, s, as] = await Promise.all([c.use("db"), c.use("sample"), c.use("assets")]);
+  sample = s; assetsNs = as;
   if (!d) { $("offline").hidden = false; return; }
   db = d;
   db.collection("dias").onSnapshot((snap) => {
