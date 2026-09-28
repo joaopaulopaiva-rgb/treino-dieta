@@ -53,9 +53,9 @@ textarea { resize: vertical; min-height: 64px; }
 .daynav .today { font-weight: 600; }
 @media (max-width: 640px) { .bib { grid-template-columns: auto 1fr; } .daynav { grid-column: 1 / -1; } }
 
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-@media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-content: start; min-width: 0; }
 .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 
 /* Corrida */
@@ -81,7 +81,7 @@ textarea { resize: vertical; min-height: 64px; }
 /* Previsto x Realizado */
 .tgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
 @media (max-width: 760px) { .tgrid { grid-template-columns: 1fr; } }
-.tcol { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.tcol { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; min-width: 0; }
 .tcol.real { border-left: 1px solid var(--line); padding-left: 24px; }
 @media (max-width: 760px) { .tcol.real { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 16px; } }
 .colhead { font-family: var(--display); font-size: 1rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
@@ -106,14 +106,28 @@ textarea { resize: vertical; min-height: 64px; }
 .thumbs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .thumbs a { display: block; width: 64px; height: 96px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); background: var(--bg); }
 .thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.grade { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; background: var(--bg); }
+.grade { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; background: var(--bg); }
 .grade-top { display: flex; gap: 14px; align-items: center; }
-.grade-n { font-family: var(--display); font-size: 3rem; line-height: .9; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 2.4ch; }
+.grade-n { font-family: var(--display); font-size: 3rem; line-height: .9; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
 .grade-n small { font-size: 1rem; color: var(--muted); font-weight: 500; }
 .grade-n.hi { color: var(--ok); } .grade-n.mid { color: var(--carb); } .grade-n.lo { color: var(--over); }
 .grade h4 { margin: 0; font-size: .72rem; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
 .grade ul { margin: 2px 0 0; padding-left: 18px; font-size: .9rem; display: grid; gap: 2px; }
-.grade p { margin: 0; font-size: .92rem; }
+.grade p { margin: 0; font-size: .92rem; min-width: 0; }
+
+.mtime { width: auto; padding: 2px 6px; font-family: var(--mono); font-size: .85rem; background: transparent; border-color: transparent; }
+.mtime:hover, .mtime:focus { border-color: var(--line); background: var(--bg); }
+.dist { display: grid; gap: 6px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.dist svg text { font-size: 10px; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: .75rem; color: var(--muted); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.micros { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.micros td { padding: 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.micros td:nth-child(2) { font-family: var(--mono); font-size: .78rem; white-space: nowrap; }
+.st { display: inline-block; border-radius: 4px; padding: 0 6px; font-size: .7rem; font-weight: 600; white-space: nowrap; }
+.st.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+.st.baixo { background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); }
+.st.alto { background: color-mix(in srgb, var(--over) 16%, transparent); color: var(--over); }
 
 /* Macros */
 .macros { display: grid; gap: 12px; }
@@ -237,6 +251,8 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       <div class="panel-head"><h2 id="dieta-h">Dieta</h2><span class="label" id="metalabel">Meta base</span></div>
       <div class="kcal-big num" id="kcal">0 <small>/ 2657 kcal</small></div>
       <div class="macros" id="macros"></div>
+      <div id="dist"></div>
+      <div id="analise-dieta"></div>
     </section>
     <section class="panel" aria-labelledby="ref-h">
       <div class="panel-head"><h2 id="ref-h">Refeições</h2><span class="note" id="mealcount"></span></div>
@@ -617,17 +633,120 @@ function renderDieta() {
   $("meals").innerHTML = meals.length ? meals.map((m) => {
     const tt = totais({ refeicoes: [m] });
     const itens = (m.itens || []).map((i) => `${esc(i.alimento)}${i.qtd ? ` (${esc(i.qtd)})` : ""}`).join(" · ");
-    return `<li class="meal"><div class="mh"><span class="mt">${esc(m.hora || "--:--")} · ${esc(m.nome || "Refeição")}</span>
+    return `<li class="meal"><div class="mh"><span class="mt"><input type="time" class="mtime" data-hora="${esc(m.id)}" value="${esc(m.hora || "")}" aria-label="Horário da refeição"> · ${esc(m.nome || "Refeição")}</span>
       <button type="button" class="ghost" data-del="${esc(m.id)}" aria-label="Apagar refeição">Apagar</button></div>
       ${m.pendente ? `<span><span class="pending">Macros pendentes</span> <span class="note">${esc(m.descricao)}</span></span>` :
         `<div class="mm">${r0(tt.kcal)} kcal · C ${r0(tt.carb_g)} · P ${r0(tt.prot_g)} · G ${r0(tt.gord_g)}</div><div class="items">${itens || esc(m.descricao)}</div>`}</li>`;
   }).join("") : `<li class="note">Nada lançado neste dia. Descreva a refeição abaixo, ou conte ao Claude na conversa.</li>`;
+  $("meals").querySelectorAll("[data-hora]").forEach((inp) => inp.onchange = () => {
+    if (!inp.value) return;
+    salvar({ refeicoes: (registros[sel]?.refeicoes || []).map((m) => m.id === inp.dataset.hora ? { ...m, hora: inp.value } : m) });
+  });
   $("meals").querySelectorAll("[data-del]").forEach((b) => b.onclick = () => {
     if (b.dataset.confirm) {
       const rest = (registros[sel]?.refeicoes || []).filter((m) => m.id !== b.dataset.del);
       salvar({ refeicoes: rest });
     } else { b.dataset.confirm = "1"; b.textContent = "Confirmar"; }
   });
+  renderDist(); renderAnaliseDieta();
+}
+
+/* ---------- distribuição e análise da alimentação ---------- */
+const hmin = (h) => { const [a, b] = String(h || "").split(":").map(Number); return Number.isFinite(a) ? a*60 + (b || 0) : null; };
+function renderDist() {
+  const el = $("dist"), reg = registros[sel] || {};
+  const ms = (reg.refeicoes || []).filter((m) => !m.pendente && hmin(m.hora) != null).map((m) => ({ ...m, t: totais({ refeicoes: [m] }), min: hmin(m.hora) }));
+  if (!ms.length) { el.innerHTML = ""; return; }
+  const W = 440, H = 130, PL = 8, PR = 8, PT = 18, PB = 22, h0 = 5*60, h1 = 24*60;
+  const X = (m) => PL + (Math.min(Math.max(m, h0), h1) - h0) / (h1 - h0) * (W - PL - PR);
+  const kmax = Math.max(800, ...ms.map((m) => m.t.kcal));
+  const Hb = (k) => (k / kmax) * (H - PT - PB);
+  const base = H - PB;
+  let bars = "";
+  // refeições no mesmo horário ficam lado a lado
+  const pos = {};
+  ms.sort((a, b) => a.min - b.min).forEach((m) => {
+    const slot = Math.round(m.min / 20); const i = pos[slot] = (pos[slot] ?? -1) + 1;
+    const x = X(m.min) - 6 + i * 13;
+    let y = base;
+    [["carb_g", 4, "--carb"], ["prot_g", 4, "--prot"], ["gord_g", 9, "--gord"]].forEach(([k, f, c]) => {
+      const h = Hb(m.t[k] * f); y -= h; bars += `<rect x="${x}" y="${y}" width="11" height="${Math.max(0, h)}" fill="var(${c})"><title>${esc(m.hora)} · ${esc(m.nome)}: ${r0(m.t.kcal)} kcal</title></rect>`;
+    });
+    bars += `<text x="${x + 5.5}" y="${y - 4}" text-anchor="middle">${r0(m.t.kcal)}</text>`;
+  });
+  let eixo = "";
+  for (let h = 6; h <= 24; h += 3) eixo += `<text x="${X(h*60)}" y="${H - 6}" text-anchor="middle">${h}h</text><line x1="${X(h*60)}" x2="${X(h*60)}" y1="${PT}" y2="${base}" stroke="var(--line)" stroke-dasharray="2 4"/>`;
+  const p = CAL[sel] || {};
+  const treinoMin = 17*60;
+  const treino = (p.corrida || p.musculacao) ? `<rect x="${X(treinoMin)}" y="${PT}" width="${X(treinoMin + 75) - X(treinoMin)}" height="${base - PT}" fill="var(--flag)" opacity=".18"/><text x="${X(treinoMin) + 3}" y="${PT - 5}" style="fill:var(--fg)">treino</text>` : "";
+  const tot = totais(reg);
+  const maior = ms.reduce((a, b) => (b.t.kcal > a.t.kcal ? b : a));
+  const pct = tot.kcal ? Math.round(maior.t.kcal / tot.kcal * 100) : 0;
+  const horas = new Set(ms.map((m) => Math.round(m.min / 30)));
+  const avisos = [];
+  if (ms.length > 1 && horas.size === 1) avisos.push("Todas as refeições estão no mesmo horário. Toque no horário de cada uma para corrigir e a distribuição fica certa.");
+  else if (pct >= 45 && ms.length > 1) avisos.push(`${pct}% das calorias numa refeição só (${esc(maior.hora)}).`);
+  const fib = ms.reduce((a, m) => a + (m.itens || []).reduce((x, i) => x + (Number(i.fibra_g) || 0), 0), 0);
+  const tags = {}; ms.forEach((m) => (m.itens || []).forEach((i) => (i.tags || []).forEach((t) => { tags[t] = (tags[t] || 0) + 1; })));
+  const temMicro = ms.some((m) => (m.itens || []).some((i) => "fibra_g" in i));
+  el.innerHTML = `<div class="dist"><div class="label">Distribuição no dia (kcal por refeição)</div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Calorias por refeição ao longo do dia">${eixo}${treino}<line x1="${PL}" x2="${W-PR}" y1="${base}" y2="${base}" stroke="var(--line)"/>${bars}</svg>
+    <div class="legend"><span><i style="background:var(--carb)"></i>carbo</span><span><i style="background:var(--prot)"></i>proteína</span><span><i style="background:var(--gord)"></i>gordura</span>${temMicro ? `<span>fibra: ${r0(fib)} g</span>` : ""}${Object.entries(tags).filter(([t]) => ["farinha refinada", "ultraprocessado", "açúcar adicionado", "fritura"].includes(t)).map(([t, n]) => `<span class="st baixo">${esc(t)} ×${n}</span>`).join("")}</div>
+    ${avisos.map((a) => `<div class="note">${a}</div>`).join("")}</div>`;
+}
+
+let analisandoDieta = false, dietCtl = null;
+function renderAnaliseDieta() {
+  const el = $("analise-dieta"); if (!el || analisandoDieta) return;
+  const reg = registros[sel] || {}, a = reg.analise_alimentacao;
+  const tem = (reg.refeicoes || []).some((m) => !m.pendente);
+  let html = "";
+  if (a) {
+    const n = Number(a.nota), cls = n >= 8 ? "hi" : n >= 6 ? "mid" : "lo";
+    const lista = (t, xs) => xs?.length ? `<div><h4>${t}</h4><ul>${xs.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+    html += `<div class="grade"><div class="grade-top"><div class="grade-n ${cls}">${esc(String(a.nota).replace(".", ","))}<small>/10</small></div><p>${esc(a.resumo)}</p></div>
+      ${a.distribuicao ? `<div><h4>Horários e distribuição</h4><p>${esc(a.distribuicao)}</p></div>` : ""}
+      ${a.micronutrientes?.length ? `<div><h4>Micronutrientes (estimativa)</h4><div class="tablewrap"><table class="micros">${a.micronutrientes.map((m) => `<tr><td>${esc(m.nome)}${m.comentario ? `<div class="note">${esc(m.comentario)}</div>` : ""}</td><td>${esc(m.estimado || "")}${m.referencia ? `<div class="note">ref. ${esc(m.referencia)}</div>` : ""}</td><td><span class="st ${["ok","baixo","alto"].includes(m.status) ? m.status : "ok"}">${esc(m.status)}</span></td></tr>`).join("")}</table></div></div>` : ""}
+      ${lista("Atenção", a.alertas)}${lista("Sugestões", a.sugestoes)}
+      <div class="note">Análise de ${a.gerado_em ? fmtBR(a.gerado_em.slice(0, 10)) : ""}${a.origem === "claude" ? " · feita na conversa" : ""} · valores estimados, não substituem exame ou nutricionista</div></div>`;
+  }
+  if (sample && tem) html += `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="button" class="${a ? "" : "primary"}" id="ad-go">${a ? "Refazer análise da alimentação" : "Analisar alimentação do dia"}</button><span class="status" id="ad-st" role="status"></span></div>`;
+  el.innerHTML = html;
+  const b = $("ad-go"); if (b) b.onclick = analisarDieta;
+}
+const PROMPT_DIETA = (ctx) => `Você é nutricionista esportivo no Brasil. Avalie a alimentação do dia deste corredor (treinando para meia maratona, também faz musculação) e dê nota de 0 a 10 (uma casa decimal).
+Avalie: 1) calorias e macros contra a meta do dia; 2) distribuição ao longo do dia — concentração de calorias num só horário, proteína repartida (ideal 0,3–0,4 g/kg por refeição, 4+ refeições), carboidrato antes e depois do treino (treino às 17h); 3) qualidade — excesso de farinha refinada, ultraprocessados, açúcar, fritura; presença de frutas, verduras, integrais; 4) micronutrientes estimados pela TACO: fibra, sódio, potássio, cálcio, ferro, magnésio, vitamina C e ômega-3 (use referências para homem adulto ativo; em Natal há muito suor, considere sódio e potássio para reposição). Se os horários parecerem registrados todos juntos, diga isso em vez de supor que ele comeu tudo de uma vez. Português do Brasil, frases curtas e concretas.
+Dados: ${JSON.stringify(ctx)}
+Responda somente com JSON:
+{"nota":7.0,"resumo":"1-2 frases","distribuicao":"1-2 frases sobre horários","micronutrientes":[{"nome":"Fibra","estimado":"14 g","referencia":"30–38 g","status":"baixo|ok|alto","comentario":"curto"}],"alertas":["..."],"sugestoes":["..."]}`;
+async function analisarDieta() {
+  if (!sample) return;
+  const k = sel, reg = registros[k] || {}, st = (t) => { const e = $("ad-st"); if (e) e.textContent = t; };
+  const p = CAL[k] || {};
+  const ctx = {
+    dia: fmtBR(k), meta: metaDia(), consumido: (() => { const t = totais(reg); return { kcal: r0(t.kcal), carb_g: r0(t.carb_g), prot_g: r0(t.prot_g), gord_g: r0(t.gord_g) }; })(),
+    peso_kg: reg.peso_kg || PERFIL.peso_kg,
+    treino_do_dia: { corrida: p.corrida ? `${p.corrida.tipo} ${p.corrida.km || ""} km` : null, musculacao: p.musculacao ? MUSC[p.musculacao].nome : null, horario: "17h" },
+    refeicoes: (reg.refeicoes || []).filter((m) => !m.pendente).map((m) => ({ hora: m.hora, nome: m.nome, descricao: m.descricao, itens: (m.itens || []).map((i) => ({ alimento: i.alimento, qtd: i.qtd, kcal: r0(i.kcal), carb_g: r0(i.carb_g), prot_g: r0(i.prot_g), gord_g: r0(i.gord_g) })) })),
+  };
+  dietCtl?.abort(); dietCtl = new AbortController();
+  const b = $("ad-go"); if (b) b.disabled = true;
+  st("Analisando… (até um minuto)");
+  analisandoDieta = true;
+  try {
+    const a = await sample.json(PROMPT_DIETA(ctx), { signal: dietCtl.signal, cache: false });
+    const nota = Math.max(0, Math.min(10, Math.round(Number(a?.nota) * 10) / 10));
+    if (!Number.isFinite(nota) || !a?.resumo) throw { code: "invalid_json" };
+    const out = { nota, resumo: String(a.resumo), distribuicao: a.distribuicao ? String(a.distribuicao) : "",
+      micronutrientes: (a.micronutrientes || []).slice(0, 10).map((m) => ({ nome: String(m.nome || ""), estimado: String(m.estimado || ""), referencia: String(m.referencia || ""), status: String(m.status || "ok"), comentario: String(m.comentario || "") })),
+      alertas: (a.alertas || []).map(String).slice(0, 5), sugestoes: (a.sugestoes || []).map(String).slice(0, 5), gerado_em: new Date().toISOString(), origem: "painel" };
+    analisandoDieta = false;
+    await salvar({ analise_alimentacao: out }, k);
+  } catch (e) {
+    analisandoDieta = false;
+    const msg = { cancelled: "", not_granted: "Sem permissão para usar o Claude nesta página.", rate_limited: "Muitas análises seguidas. Tente em alguns minutos.", invalid_json: "A análise veio incompleta. Tente de novo." }[e?.code];
+    renderAnaliseDieta(); st(msg ?? "A análise falhou. Tente de novo ou peça ao Claude na conversa.");
+  }
 }
 
 /* ---------- composer ---------- */
@@ -637,7 +756,8 @@ function nomePorHora(h) { const x = parseInt(h, 10); return x < 10 ? "Café da m
 const PROMPT = (desc) => `Você é nutricionista esportivo no Brasil. Estime os valores nutricionais desta refeição usando a Tabela TACO (e valores típicos de rótulo para produtos industrializados). Quando a quantidade não for dita, assuma a porção caseira brasileira mais comum e diga qual em "qtd".
 Refeição: """${desc}"""
 Responda somente com JSON neste formato:
-{"nome":"nome curto da refeição ou vazio","itens":[{"alimento":"Ovo de galinha inteiro cozido","qtd":"2 un (100 g)","kcal":146,"carb_g":0.6,"prot_g":13.3,"gord_g":9.5}]}`;
+{"nome":"nome curto da refeição ou vazio","itens":[{"alimento":"Ovo de galinha inteiro cozido","qtd":"2 un (100 g)","kcal":146,"carb_g":0.6,"prot_g":13.3,"gord_g":9.5,"fibra_g":0,"sodio_mg":140,"tags":[]}]}
+Em "tags" use só estes rótulos quando se aplicarem: "farinha refinada", "ultraprocessado", "açúcar adicionado", "fritura", "integral", "fruta/verdura".`;
 
 function renderRascunho() {
   if (!rascunho) { $("preview").innerHTML = ""; return; }
@@ -663,7 +783,8 @@ $("composer").addEventListener("submit", async (ev) => {
   $("calc").disabled = true; $("status").textContent = "Calculando…";
   try {
     const r = await sample.json(PROMPT(desc), { signal: ctl.signal });
-    const itens = (r?.itens || []).map((i) => ({ alimento: String(i.alimento || "Item"), qtd: String(i.qtd || ""), kcal: Number(i.kcal) || 0, carb_g: Number(i.carb_g) || 0, prot_g: Number(i.prot_g) || 0, gord_g: Number(i.gord_g) || 0 }));
+    const itens = (r?.itens || []).map((i) => ({ alimento: String(i.alimento || "Item"), qtd: String(i.qtd || ""), kcal: Number(i.kcal) || 0, carb_g: Number(i.carb_g) || 0, prot_g: Number(i.prot_g) || 0, gord_g: Number(i.gord_g) || 0,
+      fibra_g: Number(i.fibra_g) || 0, sodio_mg: Number(i.sodio_mg) || 0, tags: Array.isArray(i.tags) ? i.tags.map(String).slice(0, 4) : [] }));
     if (!itens.length) throw { code: "invalid_json" };
     const hora = $("meal-time").value || horaAgora();
     rascunho = { id: "m" + Date.now().toString(36), hora, nome: r.nome || nomePorHora(hora), descricao: desc, itens, origem: "painel" };

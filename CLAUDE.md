@@ -44,8 +44,12 @@ Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo
   "refeicoes": [
     {"id": "m<base36>", "hora": "07:30", "nome": "Café da manhã", "descricao": "texto como o JP escreveu",
      "origem": "painel|claude", "pendente": false,
-     "itens": [{"alimento": "Ovo inteiro cozido", "qtd": "2 un (100 g)", "kcal": 146, "carb_g": 1, "prot_g": 13, "gord_g": 10}]}
+     "itens": [{"alimento": "Ovo inteiro cozido", "qtd": "2 un (100 g)", "kcal": 146, "carb_g": 1, "prot_g": 13, "gord_g": 10,
+                "fibra_g": 0, "sodio_mg": 140, "tags": ["farinha refinada|ultraprocessado|açúcar adicionado|fritura|integral|fruta/verdura"]}]}
   ],
+  "analise_alimentacao": {"nota": 6.4, "resumo": "...", "distribuicao": "...",
+    "micronutrientes": [{"nome": "Fibra", "estimado": "9 g", "referencia": "30–38 g", "status": "baixo|ok|alto", "comentario": "..."}],
+    "alertas": ["..."], "sugestoes": ["..."], "gerado_em": "ISO", "origem": "painel|claude"},
   "treino_feito": {"corrida": true, "musculacao": false, "obs": "texto livre",
     "resultado": {"fonte": "Zepp|Samsung Health|manual|Strava", "distancia_km": 12.04, "tempo": "1:10:12", "pace_medio": "5:50",
                   "fc_media": 156, "fc_max": 176, "calorias": 890, "salvo_em": "ISO",
@@ -72,6 +76,7 @@ Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo
 - **Prints pendentes (fazer ao abrir toda conversa):** procurar `treino_feito.print_pendente: true` nos dias recentes. Para cada print, baixar com `Artifact` `action: "read"`, `url` do painel e `path: <asset id>`; ler a imagem; gravar `treino_feito.resultado` (formato acima), `print_pendente: false` e uma `analise` (origem "claude") com os mesmos critérios do painel. Motivo: no navegador do celular o painel não consegue mandar imagem para o Claude (sample sem suporte a imagens nessa tela), então o print fica guardado e a leitura é feita na conversa.
 - Análise/nota: botão "Analisar treino e dar nota" no painel (usa `sample`, só texto). Critérios, em ordem de peso: estrutura e distância cumpridas; ritmo de cada bloco dentro da faixa (rápido demais também é desvio); consistência e fim de treino; FC coerente; relato do atleta. Nota 0–10 com uma casa decimal.
 - Treino: o card mostra **Previsto x Realizado** lado a lado. O JP pode enviar print do Samsung Health/Zepp (lido pelo `sample` com imagens) ou digitar. Cada parcial é marcada "no alvo / rápido / lento" (±3 s) contra o pace do bloco do plano (por km acumulado; tiros casados pela distância ±12%). Se ele mandar o print na conversa, extrair e gravar em `treino_feito.resultado` no mesmo formato.
+- Alimentação: horário de cada refeição é editável no painel (tocar no horário). Gráfico "Distribuição no dia" (kcal por refeição por hora, com faixa do treino às 17h) e avisos de concentração (≥45% das kcal numa refeição, ou todas no mesmo horário = provavelmente lançadas juntas). Botão "Analisar alimentação do dia" (sample) → `analise_alimentacao`: nota, distribuição, micronutrientes estimados (fibra, sódio, potássio, cálcio, ferro, magnésio, vit. C, ômega-3), alertas (farinha refinada, ultraprocessados etc.) e sugestões. Quando lançar refeição pela conversa, preencher também `fibra_g`, `sodio_mg` e `tags`.
 - Peso: o painel tem a seção "Peso da manhã" no topo, com campo de data (padrão = hoje) — permite lançar um dia esquecido. Quando o JP disser o peso na conversa, gravar no dia certo com `peso_hora`.
 
 ## 5. Recomendações
