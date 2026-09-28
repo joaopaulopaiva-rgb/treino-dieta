@@ -20,7 +20,8 @@ Sistema pessoal de acompanhamento de treinos (corrida + musculação) e dieta. F
 - `data/musculacao.json`: os 4 treinos (T1 Upper, T2 Lower quadríceps, T3 Upper 2, T4 Lower posterior).
 - `data/calendario.json`: plano dia a dia até a prova (corrida + qual treino de musculação). Dia ausente = descanso.
 - Padrão semanal: seg = longão; ter = Lower; qua = intervalado + Upper; qui = Lower; sex = rodagem + Upper; sáb/dom = descanso.
-- **Suposição a confirmar:** a planilha só diz "UPPER"/"LOWER"; o mapeamento para T1–T4 (1º lower da semana = T2, 1º upper = T1, 2º lower = T4, 2º upper = T3) foi inferido. Pendências também marcadas no campo `obs` do calendário (28/10 e 06/11).
+- A planilha só diz "UPPER"/"LOWER"; mapeamento confirmado pelo JP: 1º lower da semana = T2, 1º upper = T1, 2º lower = T4, 2º upper = T3.
+- 06/11 (sexta antes da prova): Upper 2 é **opcional** — pode ser descanso.
 - `python3 scripts/hoje.py [AAAA-MM-DD]` mostra o plano do dia e o saldo de macros.
 
 ## 4. Registro diário

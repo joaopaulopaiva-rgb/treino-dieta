@@ -1,5 +1,5 @@
 {
- "_nota": "Calendário da aba CORRIDA. Dias ausentes = descanso. Mapeamento UPPER/LOWER -> T1..T4 é suposição (1º lower da semana=T2, 1º upper=T1, 2º lower=T4, 2º upper=T3) — confirmar com JP.",
+ "_nota": "Calendário da aba CORRIDA. Dias ausentes = descanso. Mapeamento UPPER/LOWER -> T1..T4 confirmado pelo JP em 28/09/2026: 1º lower da semana=T2, 1º upper=T1, 2º lower=T4, 2º upper=T3.",
  "dias": {
   "2026-09-28": {
    "semana": 1,
@@ -209,13 +209,12 @@
     "km": 8,
     "estrutura": [
      "1 km (6:30-6:40)",
-     "1 km (5:45-5:55)",
-     "1 km (5:20-5:30)",
+     "2 km (5:45-5:55)",
+     "2 km (5:20-5:30)",
      "1 km (5:05-5:15)",
      "1 km (4:50-5:00)",
      "1 km (6:30-6:40)"
-    ],
-    "obs": "Planilha soma 6 km nos blocos para 8 km no título — confirmar."
+    ]
    },
    "musculacao": "T1"
   },
@@ -259,8 +258,9 @@
   },
   "2026-11-06": {
    "semana": 6,
-   "descanso": true,
-   "obs": "Planilha diz 'MUSCULAÇÃO UPPER DESCANSO' — confirmar se é descanso."
+   "musculacao": "T3",
+   "opcional": true,
+   "obs": "Opcional: Upper 2 ou descanso (2 dias antes da prova)."
   },
   "2026-11-08": {
    "semana": 6,
