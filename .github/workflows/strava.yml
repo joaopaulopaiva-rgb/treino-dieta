@@ -1,0 +1,40 @@
+name: Sincronizar Strava
+
+on:
+  schedule:
+    - cron: "13 0 * * *"   # 21:13 em Natal (depois do treino das 17h)
+    - cron: "13 9 * * *"   # 06:13 em Natal
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: strava
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Conferir configuração
+        id: cfg
+        env:
+          CID: ${{ secrets.STRAVA_CLIENT_ID }}
+        run: |
+          if [ -z "$CID" ]; then echo "Strava ainda não configurado (segredos ausentes) — nada a fazer."; echo "ok=false" >> "$GITHUB_OUTPUT"; else echo "ok=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Puxar atividades
+        if: steps.cfg.outputs.ok == 'true'
+        env:
+          STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
+          STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
+          STRAVA_AUTH_CODE: ${{ secrets.STRAVA_AUTH_CODE }}
+        run: python3 scripts/strava_sync.py
+      - name: Salvar no repositório
+        if: always() && steps.cfg.outputs.ok == 'true'   # guarda o token renovado mesmo se a leitura falhar no meio
+        run: |
+          git config user.name "strava-sync"
+          git config user.email "strava-sync@users.noreply.github.com"
+          git add data/atividades.json data/.strava_token.enc 2>/dev/null || true
+          git diff --cached --quiet || { git commit -m "Strava: atividades sincronizadas" && git push; }

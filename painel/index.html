@@ -2,7 +2,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: ficha de treino do dia — faixa de contagem regressiva, plano do dia, prato do dia, peso e as 6 semanas até a prova. */
+/* Layout: ficha de treino do dia — faixa de contagem regressiva, plano do dia, peso da manhã no topo, plano do dia, prato do dia e as 6 semanas até a prova. */
 :root {
   --bg: #f3f5f8; --surface: #ffffff; --line: #dde2ea; --fg: #141a24; --muted: #5c6778;
   --accent: #1c3d73; --accent-soft: #e6ecf6; --flag: #f2b400; --flag-ink: #3b2c00;
@@ -109,10 +109,19 @@ textarea { resize: vertical; min-height: 64px; }
 .preview td:nth-child(n+2) { font-family: var(--mono); font-size: .8rem; text-align: right; white-space: nowrap; }
 .status { font-size: .85rem; color: var(--muted); min-height: 1.2em; }
 
-/* Peso */
-.weight { display: grid; gap: 12px; }
-.weight .w-in { display: flex; gap: 6px; align-items: center; }
-.weight input { width: 90px; }
+/* Peso da manhã */
+.weigh { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .weigh { grid-template-columns: 1fr; } }
+.w-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+.w-form .f { display: grid; gap: 4px; }
+.w-form input[type="date"] { width: 160px; }
+.w-form input[type="number"] { width: 110px; font-family: var(--mono); font-size: 1.1rem; }
+.w-last { font-size: .92rem; }
+.w-last b { font-family: var(--display); font-size: 1.9rem; font-weight: 700; margin-right: 4px; }
+.w-hist { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.w-hist td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.w-hist td:nth-child(n+2) { font-family: var(--mono); text-align: right; white-space: nowrap; }
+.up { color: var(--warn); } .down { color: var(--ok); }
 svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
 /* Calendário */
@@ -150,6 +159,23 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
   <div id="offline" class="offline" hidden>Os registros não carregaram nesta visualização. O plano de treino aparece normalmente; para lançar refeições e peso, abra o painel pelo claude.ai.</div>
 
+  <section class="panel" aria-labelledby="peso-h">
+    <div class="panel-head"><h2 id="peso-h">Peso da manhã</h2><span class="note" id="wdelta"></span></div>
+    <div class="weigh">
+      <div style="display:grid;gap:12px;min-width:0">
+        <form class="w-form" id="wform">
+          <div class="f"><label class="label" for="wdate">Data</label><input type="date" id="wdate"></div>
+          <div class="f"><label class="label" for="peso">Peso (kg)</label><input type="number" id="peso" step="0.1" min="40" max="200" inputmode="decimal" placeholder="87,0"></div>
+          <button type="submit" class="primary" id="savepeso">Salvar peso</button>
+        </form>
+        <div class="status" id="wstatus" role="status"></div>
+        <div class="w-last" id="wlast"></div>
+        <div class="tablewrap"><table class="w-hist" id="whist"></table></div>
+      </div>
+      <div id="wchart" style="min-width:0"></div>
+    </div>
+  </section>
+
   <div class="grid2">
     <section class="panel" aria-labelledby="treino-h">
       <div class="panel-head"><h2 id="treino-h">Treino</h2><span class="label" id="daylabel"></span></div>
@@ -182,19 +208,10 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     </form>
   </section>
 
-  <div class="grid2">
-    <section class="panel" aria-labelledby="peso-h">
-      <div class="panel-head"><h2 id="peso-h">Peso</h2><span class="note" id="wdelta"></span></div>
-      <div class="weight">
-        <div class="w-in"><input type="number" id="peso" step="0.1" min="40" max="200" inputmode="decimal" aria-label="Peso em kg"><span>kg</span><button id="savepeso">Salvar</button></div>
-        <div id="wchart"></div>
-      </div>
-    </section>
-    <section class="panel" aria-labelledby="notas-h">
-      <div class="panel-head"><h2 id="notas-h">Notas do dia</h2></div>
-      <textarea id="notas" placeholder="Sono, disposição, dor, o que quiser registrar."></textarea>
-    </section>
-  </div>
+  <section class="panel" aria-labelledby="notas-h">
+    <div class="panel-head"><h2 id="notas-h">Notas do dia</h2></div>
+    <textarea id="notas" placeholder="Sono, disposição, dor, o que quiser registrar."></textarea>
+  </section>
 
   <section class="panel" aria-labelledby="cal-h">
     <div class="panel-head"><h2 id="cal-h">Seis semanas até a prova</h2><span class="note">Toque num dia para abrir</span></div>
@@ -378,30 +395,65 @@ $("saveraw").onclick = async () => {
 };
 
 /* ---------- peso ---------- */
-function renderPeso() {
-  const reg = registros[sel] || {};
-  if (document.activeElement !== $("peso")) $("peso").value = reg.peso_kg ?? "";
-  const pts = Object.keys(registros).sort().filter((k) => registros[k].peso_kg).map((k) => [k, Number(registros[k].peso_kg)]);
-  const base = [["2026-09-28", PERFIL.peso_kg]];
-  const serie = pts.length ? (pts[0][0] > "2026-09-28" ? base.concat(pts) : pts) : base;
-  const ult = serie[serie.length - 1][1], d = ult - PERFIL.peso_kg;
-  $("wdelta").textContent = pts.length ? `${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)} kg desde 28/09` : "Ponto de partida: 87 kg";
-  const W = 420, H = 120, P = 24;
-  const x0 = parseISO(serie[0][0]), span = Math.max(1, diffDays(serie[0][0], RACE));
-  const vs = serie.map((p) => p[1]), lo = Math.min(...vs) - 1, hi = Math.max(...vs) + 1;
-  const X = (k) => P + (diffDays(serie[0][0], k) / span) * (W - 2*P);
-  const Y = (v) => H - 16 - ((v - lo) / (hi - lo)) * (H - 30);
-  const path = serie.map((p, i) => `${i ? "L" : "M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("");
-  const last = serie[serie.length - 1];
-  $("wchart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Peso ao longo do tempo">
-    <line x1="${P}" x2="${W-P}" y1="${H-16}" y2="${H-16}" stroke="var(--line)"/>
-    <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2"/>
-    ${serie.map((p) => `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="2.5" fill="var(--accent)"/>`).join("")}
-    <circle cx="${X(last[0])}" cy="${Y(last[1])}" r="4.5" fill="var(--flag)" stroke="var(--accent)"/>
-    <text x="${Math.min(X(last[0]) + 8, W - 40)}" y="${Y(last[1]) - 6}">${last[1].toFixed(1)}</text>
-    <text x="${P}" y="${H-3}">28/09</text><text x="${W-P}" y="${H-3}" text-anchor="end">08/11 prova</text></svg>`;
+const fmtKg = (v) => Number(v).toFixed(1).replace(".", ",");
+function pesagens() {
+  return Object.keys(registros).sort().filter((k) => registros[k].peso_kg).map((k) => ({ data: k, kg: Number(registros[k].peso_kg), hora: registros[k].peso_hora || "" }));
 }
-$("savepeso").onclick = () => { const v = parseFloat($("peso").value); if (v > 0) salvar({ peso_kg: v }); };
+function renderPeso() {
+  const hoje = hojeISO();
+  if (!$("wdate").value) $("wdate").value = hoje;
+  $("wdate").max = hoje;
+  const pts = pesagens();
+  const ult = pts[pts.length - 1];
+  if (ult) {
+    const d = ult.kg - PERFIL.peso_kg;
+    $("wdelta").textContent = `${d > 0 ? "+" : d < 0 ? "−" : ""}${fmtKg(Math.abs(d))} kg desde 28/09 (${fmtKg(PERFIL.peso_kg)} kg)`;
+    const quando = ult.data === hoje ? "hoje" : fmtBR(ult.data);
+    $("wlast").innerHTML = `<b class="num">${fmtKg(ult.kg)}</b> kg · última pesagem ${quando}${ult.hora ? ` às ${esc(ult.hora)}` : ""}`;
+  } else {
+    $("wdelta").textContent = `Ponto de partida: ${fmtKg(PERFIL.peso_kg)} kg em 28/09`;
+    $("wlast").innerHTML = `<span class="note">Nenhuma pesagem ainda. Pese-se de manhã, em jejum e depois de ir ao banheiro, e salve aqui.</span>`;
+  }
+  const rec = pts.slice(-7).reverse();
+  $("whist").innerHTML = rec.map((p, i) => {
+    const ant = pts[pts.length - 2 - i];
+    const dv = ant ? p.kg - ant.kg : null;
+    const cls = dv > 0 ? "up" : dv < 0 ? "down" : "note";
+    return `<tr><td>${fmtBR(p.data)}</td><td>${esc(p.hora || "–")}</td><td>${fmtKg(p.kg)} kg</td><td class="${cls}">${dv === null ? "" : (dv > 0 ? "+" : dv < 0 ? "−" : "") + fmtKg(Math.abs(dv))}</td></tr>`;
+  }).join("");
+
+  const serie = pts.some((p) => p.data === "2026-09-28") ? pts : [{ data: "2026-09-28", kg: PERFIL.peso_kg, base: true }].concat(pts);
+  const W = 440, H = 170, PL = 34, PR = 16, PT = 14, PB = 24;
+  const ini = "2026-09-28", span = diffDays(ini, RACE);
+  const vs = serie.map((p) => p.kg), lo = Math.floor(Math.min(...vs) - 0.5), hi = Math.ceil(Math.max(...vs) + 0.5);
+  const X = (k) => PL + (diffDays(ini, k) / span) * (W - PL - PR);
+  const Y = (v) => PT + (1 - (v - lo) / (hi - lo)) * (H - PT - PB);
+  const passo = Math.max(1, Math.ceil((hi - lo) / 4));
+  let grade = "";
+  for (let v = lo; v <= hi; v += passo) grade += `<line x1="${PL}" x2="${W-PR}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${PL-6}" y="${Y(v)+3}" text-anchor="end">${v}</text>`;
+  const semanas = [0,7,14,21,28,35].map((n) => addDays(ini, n));
+  const eixo = semanas.map((k, i) => `<text x="${X(k)}" y="${H-6}" text-anchor="middle">${k.slice(8)}/${k.slice(5,7)}</text>`).join("") + `<text x="${X(RACE)}" y="${H-6}" text-anchor="end">prova</text>`;
+  const path = serie.map((p, i) => `${i ? "L" : "M"}${X(p.data).toFixed(1)},${Y(p.kg).toFixed(1)}`).join("");
+  const last = serie[serie.length - 1];
+  $("wchart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Peso de 28/09 até a prova">
+    ${grade}${eixo}
+    <line x1="${X(hoje)}" x2="${X(hoje)}" y1="${PT}" y2="${H-PB}" stroke="var(--flag)" stroke-dasharray="3 3"/>
+    <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    ${serie.map((p) => `<circle cx="${X(p.data)}" cy="${Y(p.kg)}" r="3" fill="${p.base ? "var(--surface)" : "var(--accent)"}" stroke="var(--accent)"><title>${fmtBR(p.data)}: ${fmtKg(p.kg)} kg</title></circle>`).join("")}
+    <text x="${Math.min(X(last.data) + 8, W - PR - 30)}" y="${Y(last.kg) - 8}" style="fill:var(--fg)">${fmtKg(last.kg)}</text></svg>`;
+}
+$("wform").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const v = parseFloat(String($("peso").value).replace(",", "."));
+  const k = $("wdate").value || hojeISO();
+  if (!(v >= 40 && v <= 200)) { $("wstatus").textContent = "Digite o peso em kg, por exemplo 86,4."; return; }
+  if (k > hojeISO()) { $("wstatus").textContent = "A data não pode ser no futuro."; return; }
+  const agora = new Date();
+  const hora = k === hojeISO() ? horaAgora() : (registros[k]?.peso_hora || "");
+  await salvar({ peso_kg: Math.round(v * 10) / 10, peso_hora: hora, peso_registrado_em: agora.toISOString() }, k);
+  $("peso").value = "";
+  $("wstatus").textContent = `Salvo: ${fmtKg(v)} kg em ${fmtBR(k)}${hora ? ` às ${hora}` : ""}.`;
+});
 
 /* ---------- calendário ---------- */
 function renderCal() {
@@ -438,9 +490,8 @@ $("gotoday").onclick = () => irPara(hojeISO());
 
 /* Escrita: uma por vez, documento inteiro do dia. */
 let fila = Promise.resolve();
-function salvar(patch) {
-  if (!db) { $("status").textContent = "Os registros não estão disponíveis nesta visualização."; return Promise.resolve(); }
-  const k = sel;
+function salvar(patch, k = sel) {
+  if (!db) { $("status").textContent = "Os registros não estão disponíveis nesta visualização."; $("wstatus").textContent = "Os registros não estão disponíveis nesta visualização."; return Promise.resolve(); }
   const doc = { data: k, ...(registros[k] || {}), ...patch, atualizado_em: new Date().toISOString() };
   registros[k] = doc; render();
   fila = fila.then(() => db.doc("dias/" + k).set(doc)).catch((e) => { $("status").textContent = "Não consegui salvar (" + (e?.code || "erro") + "). Tente de novo."; });

@@ -38,7 +38,9 @@ Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo
   "data": "2026-09-28",
   "meta": {"kcal": 2800, "carb_g": 300, "prot_g": 232, "gord_g": 75},   // opcional: só quando o dia tem meta ajustada
   "meta_nome": "Dia de longão",                                         // opcional: rótulo exibido no painel
-  "peso_kg": 87.0,
+  "peso_kg": 87.0,                       // pesagem da manhã; a data é o id do documento
+  "peso_hora": "06:45",                   // hora local (Natal) em que foi salvo; vazio se lançado depois
+  "peso_registrado_em": "2026-09-28T09:45:00Z",
   "refeicoes": [
     {"id": "m<base36>", "hora": "07:30", "nome": "Café da manhã", "descricao": "texto como o JP escreveu",
      "origem": "painel|claude", "pendente": false,
@@ -59,6 +61,8 @@ Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo
 - Mudou o plano ou o perfil → regenerar e republicar com a ferramenta `Artifact` passando `url` acima (nunca publicar sem `url`, senão cria outro painel).
 - Capacidades: `db` (só o dono/editores escrevem) e `sample` (botão "Calcular macros" usa o Claude da própria conta do JP).
 
+- Peso: o painel tem a seção "Peso da manhã" no topo, com campo de data (padrão = hoje) — permite lançar um dia esquecido. Quando o JP disser o peso na conversa, gravar no dia certo com `peso_hora`.
+
 ## 5. Recomendações
 
 - Curtas e práticas, ligadas ao treino do dia (pré/pós-treino, carbo em dia de volume, hidratação no calor de Natal).
@@ -69,3 +73,16 @@ Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo
 
 - Português, direto. Tratar por "você".
 - Registros vão para o banco do painel (não precisam de commit). Mudanças de plano/código: commit + push (o ambiente é efêmero).
+
+## 7. Strava (relógio Amazfit)
+
+Caminho: Amazfit → app Zepp → Strava → `.github/workflows/strava.yml` (21:13 e 06:13 em Natal, + manual) → `scripts/strava_sync.py` → `data/atividades.json` (resumo, parciais por km, voltas/tiros, FC).
+- Workflow criado com autorização do JP (28/09/2026). **Configuração ainda pendente** — enquanto os segredos não existirem, o workflow só registra "Strava ainda não configurado" e termina.
+- Passos para o JP (guiar quando ele quiser fazer):
+  1. Zepp: Perfil → Adicionar contas → Strava.
+  2. strava.com/settings/api → criar app (Website: qualquer; Authorization Callback Domain: `localhost`). Anotar Client ID e Client Secret.
+  3. Abrir `https://www.strava.com/oauth/authorize?client_id=<ID>&response_type=code&redirect_uri=http://localhost&approval_prompt=force&scope=read,activity:read_all`, autorizar, e copiar o `code=` da URL (a página dá erro, é normal).
+  4. GitHub → treino-dieta → Settings → Secrets and variables → Actions: `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_AUTH_CODE`.
+  5. Actions → Sincronizar Strava → Run workflow (o código expira rápido: rodar logo após o passo 3).
+- O refresh token fica em `data/.strava_token.enc` (criptografado com o client secret). Se der erro de autorização, refazer passos 3–5 apagando esse arquivo.
+- Uso: ao conversar, ler `data/atividades.json` (dar `git pull`), comparar com o planejado em `data/calendario.json` e, se o JP quiser, marcar `treino_feito` no banco do painel.
