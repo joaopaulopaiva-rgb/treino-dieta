@@ -13,6 +13,7 @@ Sistema pessoal de acompanhamento de treinos (corrida + musculação) e dieta. F
 - **Prova-alvo: Meia Maratona PRF — 08/11/2026** (prova de corrida organizada pela PRF, **não** é TAF).
 - Sem lesões, restrições ou condições médicas informadas.
 - Macros base (definidos pelo JP): **Carb 232 g · Gordura 89 g · Proteína 232 g ≈ 2.657 kcal**.
+- **Dias de longão e intervalado** (aprovado pelo JP em 28/09/2026): **Carb 300 g · Gordura 75 g · Proteína 232 g ≈ 2.803 kcal**. Marcados com `"meta": "intenso"` em `data/calendario.json`; valores em `config/metas.por_tipo.intenso` no banco do painel e em `data/perfil.json`.
 
 ## 3. Plano de treino
 
@@ -29,7 +30,7 @@ Sistema pessoal de acompanhamento de treinos (corrida + musculação) e dieta. F
 **Fonte da verdade dos registros: o banco (`db`) do painel** — https://claude.ai/artifact/5AySTTsH6QVDPsTuCyGE3o
 Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo painel quanto pela conversa; os dois gravam no mesmo lugar. `data/registros/` no repositório não é usado.
 
-- `config/metas` → `{"base": {"kcal", "carb_g", "prot_g", "gord_g"}}` — meta base de macros. Mudar só com aprovação do JP.
+- `config/metas` → `{"base": {...}, "por_tipo": {"intenso": {...}}}` — metas de macros. Ordem no painel: `meta` do próprio dia > meta do tipo do dia no calendário > base. Mudar só com aprovação do JP.
 - `dias/<AAAA-MM-DD>` → um documento por dia:
 
 ```json

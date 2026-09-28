@@ -18,5 +18,14 @@
   "gord_g": 89,
   "prot_g": 232,
   "kcal": 2657
+ },
+ "metas_por_tipo": {
+  "intenso": {
+   "nome": "Dia de longão/intervalado",
+   "kcal": 2803,
+   "carb_g": 300,
+   "prot_g": 232,
+   "gord_g": 75
+  }
  }
 }

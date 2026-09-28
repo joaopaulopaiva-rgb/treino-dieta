@@ -10,7 +10,8 @@
      "2 km leve (6:30-6:40)",
      "10 km forte (5:45-5:55)"
     ]
-   }
+   },
+   "meta": "intenso"
   },
   "2026-09-29": {
    "semana": 1,
@@ -27,7 +28,8 @@
      "1 km leve (6:30-6:40)"
     ]
    },
-   "musculacao": "T1"
+   "musculacao": "T1",
+   "meta": "intenso"
   },
   "2026-10-01": {
    "semana": 1,
@@ -57,7 +59,8 @@
      "3 km (5:20-5:30)",
      "3 km (5:45-5:55)"
     ]
-   }
+   },
+   "meta": "intenso"
   },
   "2026-10-06": {
    "semana": 2,
@@ -74,7 +77,8 @@
      "1 km leve (6:30-6:40)"
     ]
    },
-   "musculacao": "T1"
+   "musculacao": "T1",
+   "meta": "intenso"
   },
   "2026-10-08": {
    "semana": 2,
@@ -104,7 +108,8 @@
      "4 km (5:20-5:30)",
      "2 km (5:45-5:55)"
     ]
-   }
+   },
+   "meta": "intenso"
   },
   "2026-10-13": {
    "semana": 3,
@@ -121,7 +126,8 @@
      "1 km leve (6:30-6:40)"
     ]
    },
-   "musculacao": "T1"
+   "musculacao": "T1",
+   "meta": "intenso"
   },
   "2026-10-15": {
    "semana": 3,
@@ -148,7 +154,8 @@
      "2 km leve (6:30-6:40)",
      "10 km forte (5:45-5:55)"
     ]
-   }
+   },
+   "meta": "intenso"
   },
   "2026-10-20": {
    "semana": 4,
@@ -165,7 +172,8 @@
      "1 km leve (6:30-6:40)"
     ]
    },
-   "musculacao": "T1"
+   "musculacao": "T1",
+   "meta": "intenso"
   },
   "2026-10-22": {
    "semana": 4,
@@ -196,7 +204,8 @@
      "4 km (5:05-5:15)",
      "1 km (6:30-6:40)"
     ]
-   }
+   },
+   "meta": "intenso"
   },
   "2026-10-27": {
    "semana": 5,
@@ -235,7 +244,8 @@
      "2 km leve (6:30-6:40)",
      "12 km forte (5:45-5:55)"
     ]
-   }
+   },
+   "meta": "intenso"
   },
   "2026-11-03": {
    "semana": 6,

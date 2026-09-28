@@ -223,6 +223,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":
 let sel = hojeISO();
 let registros = {};          // id -> doc body
 let metaBase = PERFIL.macros_base;
+let metasCfg = PERFIL.metas_por_tipo || {};
 let db = null, sample = null;
 
 /* ---------- corrida ---------- */
@@ -279,7 +280,14 @@ function renderPlano() {
 }
 
 /* ---------- dieta ---------- */
-function metaDia() { return (registros[sel] && registros[sel].meta) || metaBase; }
+function metaInfo() {
+  const reg = registros[sel];
+  if (reg && reg.meta) return { meta: reg.meta, nome: reg.meta_nome || "Meta ajustada" };
+  const tipo = CAL[sel] && CAL[sel].meta;
+  if (tipo && metasCfg[tipo]) return { meta: metasCfg[tipo], nome: metasCfg[tipo].nome || "Meta ajustada" };
+  return { meta: metaBase, nome: "Meta base" };
+}
+function metaDia() { return metaInfo().meta; }
 function totais(reg) {
   const t = { kcal: 0, carb_g: 0, prot_g: 0, gord_g: 0 };
   (reg?.refeicoes || []).forEach((m) => (m.itens || []).forEach((i) => { for (const k in t) t[k] += Number(i[k]) || 0; }));
@@ -289,7 +297,7 @@ function renderDieta() {
   const reg = registros[sel] || {};
   const meta = metaDia();
   const t = totais(reg);
-  $("metalabel").textContent = reg.meta ? (reg.meta_nome || "Meta ajustada") : "Meta base";
+  $("metalabel").textContent = metaInfo().nome;
   $("kcal").innerHTML = `${r0(t.kcal)} <small>/ ${r0(meta.kcal)} kcal</small>`;
   const rows = [["Carboidrato","carb_g","--carb"],["Proteína","prot_g","--prot"],["Gordura","gord_g","--gord"]];
   $("macros").innerHTML = rows.map(([n, k, c]) => {
@@ -455,6 +463,6 @@ render();
     snap.docs.forEach((x) => { if (x.exists) novo[x.id] = x.data(); });
     registros = novo; render();
   }, () => { $("offline").hidden = false; });
-  db.doc("config/metas").onSnapshot((x) => { if (x.exists && x.data()?.base) { metaBase = x.data().base; render(); } });
+  db.doc("config/metas").onSnapshot((x) => { const v = x.exists && x.data(); if (v && v.base) { metaBase = v.base; metasCfg = v.por_tipo || metasCfg; render(); } });
 })();
 </script>
