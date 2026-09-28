@@ -4,7 +4,7 @@ Contexto persistente. Qualquer sessão do Claude Code neste repositório deve le
 
 ## 1. O que é
 
-Sistema pessoal de acompanhamento de treinos (corrida + musculação) e dieta. Funciona por conversa: o JP diz o que comeu / treinou / pesou, o Claude registra nos arquivos de `data/`, faz commit/push e responde com o saldo do dia. Também deve dizer qual é o treino do dia e dar recomendações curtas (dieta ajustada ao treino, recuperação, preparação para a prova).
+Sistema pessoal de acompanhamento de treinos (corrida + musculação) e dieta. Funciona por conversa: o JP diz o que comeu / treinou / pesou, o Claude registra no banco do painel (seção 4) e responde com o saldo do dia. Também deve dizer qual é o treino do dia e dar recomendações curtas (dieta ajustada ao treino, recuperação, preparação para a prova).
 
 ## 2. Perfil (ver `data/perfil.json`)
 
@@ -24,27 +24,39 @@ Sistema pessoal de acompanhamento de treinos (corrida + musculação) e dieta. F
 - 06/11 (sexta antes da prova): Upper 2 é **opcional** — pode ser descanso.
 - `python3 scripts/hoje.py [AAAA-MM-DD]` mostra o plano do dia e o saldo de macros.
 
-## 4. Registro diário
+## 4. Registro diário — fica no banco do painel
 
-Um arquivo por dia em `data/registros/AAAA-MM-DD.json`:
+**Fonte da verdade dos registros: o banco (`db`) do painel** — https://claude.ai/artifact/5AySTTsH6QVDPsTuCyGE3o
+Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo painel quanto pela conversa; os dois gravam no mesmo lugar. `data/registros/` no repositório não é usado.
+
+- `config/metas` → `{"base": {"kcal", "carb_g", "prot_g", "gord_g"}}` — meta base de macros. Mudar só com aprovação do JP.
+- `dias/<AAAA-MM-DD>` → um documento por dia:
 
 ```json
 {
   "data": "2026-09-28",
-  "meta": {"kcal": 2657, "carb_g": 232, "prot_g": 232, "gord_g": 89},
-  "peso_kg": null,
+  "meta": {"kcal": 2800, "carb_g": 300, "prot_g": 232, "gord_g": 75},   // opcional: só quando o dia tem meta ajustada
+  "meta_nome": "Dia de longão",                                         // opcional: rótulo exibido no painel
+  "peso_kg": 87.0,
   "refeicoes": [
-    {"hora": "07:30", "nome": "Café da manhã", "descricao": "texto como o JP escreveu",
+    {"id": "m<base36>", "hora": "07:30", "nome": "Café da manhã", "descricao": "texto como o JP escreveu",
+     "origem": "painel|claude", "pendente": false,
      "itens": [{"alimento": "Ovo inteiro cozido", "qtd": "2 un (100 g)", "kcal": 146, "carb_g": 1, "prot_g": 13, "gord_g": 10}]}
   ],
-  "treino_feito": {"corrida": null, "musculacao": null, "obs": ""},
+  "treino_feito": {"corrida": true, "musculacao": false, "obs": "texto livre"},
   "notas": ""
 }
 ```
 
-- `meta` do dia pode diferir da base (ex.: mais carbo em dia de longão) — registrar quando for ajustada.
-- Estimar valores nutricionais pela **tabela TACO** (e rótulo, quando o JP informar a marca). Quando a quantidade não for dita, usar medida caseira típica e deixar claro na resposta que foi estimado.
+- Sempre ler o documento do dia antes de escrever e passar `if_version` (o painel pode ter gravado algo).
+- `pendente: true` = o JP salvou só a descrição pelo painel; ao abrir uma conversa, procurar refeições pendentes, calcular os `itens` e gravar `pendente: false`.
+- Estimar valores pela **tabela TACO** (e rótulo, quando o JP informar a marca). Quantidade não dita → medida caseira típica, avisando que foi estimado.
 - Toda resposta de lançamento termina com: consumido / meta / falta (kcal, carbo, proteína, gordura).
+
+### Painel
+- Fonte: `painel/painel.template.html`; `python3 scripts/gerar_painel.py` gera `painel/index.html` embutindo `data/musculacao.json`, `data/calendario.json` e `data/perfil.json`.
+- Mudou o plano ou o perfil → regenerar e republicar com a ferramenta `Artifact` passando `url` acima (nunca publicar sem `url`, senão cria outro painel).
+- Capacidades: `db` (só o dono/editores escrevem) e `sample` (botão "Calcular macros" usa o Claude da própria conta do JP).
 
 ## 5. Recomendações
 
@@ -55,4 +67,4 @@ Um arquivo por dia em `data/registros/AAAA-MM-DD.json`:
 ## 6. Estilo
 
 - Português, direto. Tratar por "você".
-- Commit + push a cada lançamento (o ambiente é efêmero: o que não foi pro GitHub se perde).
+- Registros vão para o banco do painel (não precisam de commit). Mudanças de plano/código: commit + push (o ambiente é efêmero).
