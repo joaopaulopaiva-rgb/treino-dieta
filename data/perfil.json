@@ -1,0 +1,22 @@
+{
+ "nome": "João Paulo",
+ "idade": 35,
+ "sexo": "M",
+ "altura_cm": 183,
+ "peso_kg": 87,
+ "rotina": "Trabalho sentado; treina normalmente às 17h",
+ "cidade": "Natal-RN",
+ "objetivo": "Desempenho, mantendo bom nível muscular e baixo percentual de gordura",
+ "prova_alvo": {
+  "nome": "Meia Maratona PRF",
+  "data": "2026-11-08",
+  "distancia_km": 21.1
+ },
+ "restricoes": "Nenhuma informada",
+ "macros_base": {
+  "carb_g": 232,
+  "gord_g": 89,
+  "prot_g": 232,
+  "kcal": 2657
+ }
+}
