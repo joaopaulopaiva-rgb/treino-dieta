@@ -78,6 +78,31 @@ textarea { resize: vertical; min-height: 64px; }
 .chip[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: var(--surface); }
 .note { font-size: .82rem; color: var(--muted); }
 
+/* Previsto x Realizado */
+.tgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 760px) { .tgrid { grid-template-columns: 1fr; } }
+.tcol { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.tcol.real { border-left: 1px solid var(--line); padding-left: 24px; }
+@media (max-width: 760px) { .tcol.real { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 16px; } }
+.colhead { font-family: var(--display); font-size: 1rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 10px; }
+.stat { display: grid; gap: 0; }
+.stat b { font-family: var(--display); font-size: 1.6rem; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.splits { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.splits th { text-align: left; font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; padding: 4px; border-bottom: 1px solid var(--line); }
+.splits td { padding: 4px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: .8rem; white-space: nowrap; }
+.tag { display: inline-block; border-radius: 4px; padding: 0 6px; font-size: .7rem; font-family: var(--body); font-weight: 600; }
+.tag.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+.tag.fast { background: color-mix(in srgb, var(--prot) 18%, transparent); color: var(--prot); }
+.tag.slow { background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); }
+.drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 8px; justify-items: start; }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop input[type="file"] { display: none; }
+.manual { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
+.manual label { display: grid; gap: 3px; }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: .85rem; }
+
 /* Macros */
 .macros { display: grid; gap: 12px; }
 .macro { display: grid; gap: 4px; }
@@ -176,37 +201,48 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     </div>
   </section>
 
-  <div class="grid2">
-    <section class="panel" aria-labelledby="treino-h">
-      <div class="panel-head"><h2 id="treino-h">Treino</h2><span class="label" id="daylabel"></span></div>
-      <div id="plan"></div>
-      <div class="done-row" id="donerow"></div>
-      <label class="label" for="treino-obs">Como foi</label>
-      <textarea id="treino-obs" placeholder="Ex.: pace médio 5:48 no bloco forte, calor forte, perna pesada no fim."></textarea>
-    </section>
+  <section class="panel" aria-labelledby="treino-h">
+    <div class="panel-head"><h2 id="treino-h">Treino</h2><span class="label" id="daylabel"></span></div>
+    <div class="tgrid">
+      <div class="tcol" aria-labelledby="prev-h">
+        <div class="colhead" id="prev-h">Previsto</div>
+        <div id="plan"></div>
+      </div>
+      <div class="tcol real" aria-labelledby="real-h">
+        <div class="colhead" id="real-h">Realizado</div>
+        <div id="result"></div>
+        <div id="resform"></div>
+        <div class="done-row" id="donerow"></div>
+        <label class="label" for="treino-obs">Como foi</label>
+        <textarea id="treino-obs" placeholder="Ex.: calor forte, perna pesada no fim."></textarea>
+      </div>
+    </div>
+  </section>
 
+  <div class="grid2">
     <section class="panel" aria-labelledby="dieta-h">
       <div class="panel-head"><h2 id="dieta-h">Dieta</h2><span class="label" id="metalabel">Meta base</span></div>
       <div class="kcal-big num" id="kcal">0 <small>/ 2657 kcal</small></div>
       <div class="macros" id="macros"></div>
     </section>
+    <section class="panel" aria-labelledby="ref-h">
+      <div class="panel-head"><h2 id="ref-h">Refeições</h2><span class="note" id="mealcount"></span></div>
+      <ul class="meals" id="meals"></ul>
+      <form class="composer" id="composer">
+        <label class="label" for="meal-desc">O que você comeu?</label>
+        <textarea id="meal-desc" placeholder="Ex.: 2 ovos mexidos, 2 fatias de pão integral, café com 100 ml de leite"></textarea>
+        <div class="row">
+          <input type="time" id="meal-time" aria-label="Horário">
+          <button type="submit" class="primary" id="calc">Calcular macros</button>
+          <button type="button" id="saveraw">Salvar só a descrição</button>
+        </div>
+        <div class="status" id="status" role="status"></div>
+        <div id="preview"></div>
+      </form>
+    </section>
   </div>
 
-  <section class="panel" aria-labelledby="ref-h">
-    <div class="panel-head"><h2 id="ref-h">Refeições</h2><span class="note" id="mealcount"></span></div>
-    <ul class="meals" id="meals"></ul>
-    <form class="composer" id="composer">
-      <label class="label" for="meal-desc">O que você comeu?</label>
-      <textarea id="meal-desc" placeholder="Ex.: 2 ovos mexidos, 2 fatias de pão integral, café com 100 ml de leite"></textarea>
-      <div class="row">
-        <input type="time" id="meal-time" aria-label="Horário">
-        <button type="submit" class="primary" id="calc">Calcular macros</button>
-        <button type="button" id="saveraw">Salvar só a descrição</button>
-      </div>
-      <div class="status" id="status" role="status"></div>
-      <div id="preview"></div>
-    </form>
-  </section>
+
 
   <section class="panel" aria-labelledby="notas-h">
     <div class="panel-head"><h2 id="notas-h">Notas do dia</h2></div>
@@ -294,6 +330,142 @@ function renderPlano() {
     salvar({ treino_feito: cur });
   });
   if (document.activeElement !== $("treino-obs")) $("treino-obs").value = tf.obs || "";
+  renderResultado();
+}
+
+/* ---------- realizado ---------- */
+const hms = (s) => { s = Math.round(s); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h ? h + ":" + String(m).padStart(2,"0") : m) + ":" + String(x).padStart(2,"0"); };
+const segs = (t) => { if (!t) return 0; const p = String(t).trim().split(":").map(Number); return p.reduce((a, b) => a*60 + (b || 0), 0); };
+function alvos(p) {
+  // faixas de km -> pace alvo (seg) e tiros: {dist_m, lo, hi}
+  const faixas = [], tiros = []; let km = 0;
+  (p?.corrida?.estrutura || []).forEach((b) => {
+    const m = b.match(/(\d):(\d\d)\s*-\s*(\d):(\d\d)/); const lo = m ? +m[1]*60 + +m[2] : null, hi = m ? +m[3]*60 + +m[4] : null;
+    const t = b.match(/^(\d+)\s*x\s*(\d+)\s*m/i);
+    if (t) { tiros.push({ dist_m: +t[2], lo, hi }); km += (+t[1] * +t[2]) / 1000; return; }
+    const k = blocoKm(b); faixas.push({ de: km, ate: km + k, lo, hi }); km += k;
+  });
+  return { faixas, tiros };
+}
+function avaliar(paceSeg, lo, hi) {
+  if (!paceSeg || lo == null) return "";
+  if (paceSeg < lo - 3) return `<span class="tag fast">rápido</span>`;
+  if (paceSeg > hi + 3) return `<span class="tag slow">lento</span>`;
+  return `<span class="tag ok">no alvo</span>`;
+}
+function renderResultado() {
+  const p = CAL[sel] || {}, r = registros[sel]?.treino_feito?.resultado;
+  const el = $("result");
+  if (!r) { el.innerHTML = p.corrida ? `<p class="note">Nenhum resultado ainda. Envie o print do Samsung Health ou do Zepp, ou digite os números.</p>` : ""; renderResForm(); return; }
+  const tempo = segs(r.tempo), paceM = r.pace_medio ? segs(r.pace_medio) : (r.distancia_km && tempo ? tempo / r.distancia_km : 0);
+  const st = [
+    [r.distancia_km ? String(r.distancia_km).replace(".", ",") : "–", "km"],
+    [tempo ? hms(tempo) : "–", "tempo"],
+    [paceM ? hms(paceM) : "–", "pace médio"],
+    [r.fc_media || "–", "FC média"],
+  ];
+  if (r.fc_max) st.push([r.fc_max, "FC máx"]);
+  let html = `<div class="stats">${st.map(([v, l]) => `<div class="stat"><b>${esc(v)}</b><span>${l}</span></div>`).join("")}</div>`;
+  const { faixas, tiros } = alvos(p);
+  if (r.parciais?.length) {
+    let acc = 0;
+    html += `<div class="tablewrap"><table class="splits"><tr><th>#</th><th>dist.</th><th>pace</th><th>FC</th><th>alvo</th></tr>` +
+      r.parciais.map((x, i) => {
+        const d = Number(x.dist_km) || 1, ps = segs(x.pace);
+        const meio = acc + d/2; acc += d;
+        let tag = "";
+        const tiro = tiros.find((t) => Math.abs(d*1000 - t.dist_m) <= t.dist_m * 0.12);
+        if (tiro) tag = avaliar(ps, tiro.lo, tiro.hi);
+        else { const f = faixas.find((f) => meio >= f.de && meio < f.ate); if (f && d >= 0.5) tag = avaliar(ps, f.lo, f.hi); }
+        return `<tr><td>${esc(x.n ?? i+1)}</td><td>${String(d).replace(".", ",")} km</td><td>${esc(x.pace || "–")}</td><td>${esc(x.fc ?? "–")}</td><td>${tag}</td></tr>`;
+      }).join("") + `</table></div>`;
+  }
+  html += `<div class="note">Fonte: ${esc(r.fonte || "manual")}${r.salvo_em ? ` · salvo em ${fmtBR(r.salvo_em.slice(0,10))}` : ""} · <button type="button" class="linkish" id="res-del">apagar resultado</button></div>`;
+  el.innerHTML = html;
+  $("res-del").onclick = (ev) => {
+    const b = ev.currentTarget;
+    if (!b.dataset.c) { b.dataset.c = 1; b.textContent = "confirmar"; return; }
+    const tf = { ...(registros[sel]?.treino_feito || {}) }; delete tf.resultado; salvar({ treino_feito: tf });
+  };
+  renderResForm();
+}
+
+let resRascunho = null, resCtl = null, lendoPrint = false;
+function renderResForm() {
+  const p = CAL[sel] || {}, el = $("resform");
+  if (resRascunho && el.querySelector("#rv-ok")) return;   // não apagar o que está sendo editado
+  if (lendoPrint && el.querySelector("#drop")) return;
+  if (!p.corrida && !resRascunho) { el.innerHTML = ""; return; }
+  if (resRascunho) {
+    const r = resRascunho;
+    el.innerHTML = `<div class="preview"><div class="label">Lido do print · confira antes de salvar</div>
+      <div class="manual">
+        <label><span class="label">Distância (km)</span><input id="rv-d" value="${esc(r.distancia_km ?? "")}"></label>
+        <label><span class="label">Tempo</span><input id="rv-t" value="${esc(r.tempo ?? "")}" placeholder="1:10:30"></label>
+        <label><span class="label">FC média</span><input id="rv-f" value="${esc(r.fc_media ?? "")}"></label>
+        <label><span class="label">FC máx</span><input id="rv-x" value="${esc(r.fc_max ?? "")}"></label>
+      </div>
+      ${r.parciais?.length ? `<div class="note">${r.parciais.length} parciais: ${r.parciais.map((x) => esc(x.pace)).join(" · ")}</div>` : ""}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="primary" id="rv-ok">Salvar resultado</button><button type="button" id="rv-no">Descartar</button></div></div>`;
+    $("rv-ok").onclick = () => {
+      const d = parseFloat(String($("rv-d").value).replace(",", ".")) || null;
+      const t = $("rv-t").value.trim() || null;
+      const out = { ...resRascunho, distancia_km: d, tempo: t, fc_media: Number($("rv-f").value) || null, fc_max: Number($("rv-x").value) || null, salvo_em: new Date().toISOString() };
+      if (d && t && !out.pace_medio) out.pace_medio = hms(segs(t) / d);
+      resRascunho = null; $("resform").innerHTML = "";
+      salvar({ treino_feito: { ...(registros[sel]?.treino_feito || {}), corrida: true, resultado: out } });
+    };
+    $("rv-no").onclick = () => { resRascunho = null; el.innerHTML = ""; renderResForm(); };
+    return;
+  }
+  const temRes = !!registros[sel]?.treino_feito?.resultado;
+  el.innerHTML = temRes ? `<div id="drop" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <button type="button" class="linkish" id="pick">Substituir pelo print</button><button type="button" class="linkish" id="man">Corrigir os números</button>
+      <input type="file" id="shots" accept="image/*" multiple hidden><div class="status" id="rstatus" role="status"></div></div>` : `<div class="drop" id="drop">
+      <span class="label">${temRes ? "Substituir pelo print" : "Enviar print do treino"}</span>
+      <span class="note">Samsung Health ou Zepp. Pode mandar mais de um (resumo + parciais).</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="pick">Escolher imagens</button><button type="button" class="linkish" id="man">Digitar os números</button></div>
+      <input type="file" id="shots" accept="image/*" multiple>
+      <div class="status" id="rstatus" role="status"></div>
+    </div>`;
+  $("pick").onclick = () => $("shots").click();
+  $("shots").onchange = () => lerPrints($("shots").files);
+  const dz = $("drop");
+  dz.ondragover = (e) => { e.preventDefault(); dz.classList.add("over"); };
+  dz.ondragleave = () => dz.classList.remove("over");
+  dz.ondrop = (e) => { e.preventDefault(); dz.classList.remove("over"); lerPrints(e.dataTransfer.files); };
+  $("man").onclick = () => { const atual = registros[sel]?.treino_feito?.resultado; resRascunho = atual ? { ...atual, parciais: [...(atual.parciais || [])] } : { fonte: "manual", parciais: [] }; renderResForm(); };
+}
+const PROMPT_PRINT = (plano) => `Estas imagens são prints de um treino de corrida exportados do app Samsung Health ou Zepp (Amazfit). Extraia os números exatamente como aparecem.
+Treino planejado (só para contexto, não invente dados a partir dele): ${plano}
+Responda somente com JSON neste formato (use null no que não aparecer):
+{"fonte":"Samsung Health|Zepp","distancia_km":12.05,"tempo":"1:10:32","pace_medio":"5:51","fc_media":156,"fc_max":178,"calorias":890,"parciais":[{"n":1,"dist_km":1,"pace":"6:35","fc":141}]}
+"parciais" = as parciais por km ou as voltas/tiros listadas, na ordem; "dist_km" de cada uma em km (ex.: 0.4 para um tiro de 400 m). Tempo no formato h:mm:ss ou mm:ss; pace em min:seg por km.`;
+async function lerPrints(files) {
+  const st = () => $("rstatus");
+  if (!files || !files.length) return;
+  if (!sample) { st().textContent = "A leitura automática não está disponível aqui. Use “Digitar os números” ou mande o print na conversa com o Claude."; return; }
+  const caps = await sample.limits().catch(() => null);
+  if (!caps?.images) { st().textContent = "Esta visualização não aceita imagens. Use “Digitar os números” ou mande o print na conversa."; return; }
+  const lista = [...files].slice(0, caps.images.maxCount);
+  resCtl?.abort(); resCtl = new AbortController();
+  st().textContent = "Lendo o print… (pode levar até um minuto)";
+  lendoPrint = true;
+  const c = CAL[sel]?.corrida;
+  const plano = c ? `${c.tipo}, ${c.km || ""} km: ${c.estrutura.join("; ")}` : "sem corrida planejada";
+  try {
+    const r = await sample.json(PROMPT_PRINT(plano), { images: lista, signal: resCtl.signal });
+    const num = (v) => (v == null || v === "" ? null : Number(v));
+    resRascunho = {
+      fonte: String(r?.fonte || "print"), distancia_km: num(r?.distancia_km), tempo: r?.tempo || null, pace_medio: r?.pace_medio || null,
+      fc_media: num(r?.fc_media), fc_max: num(r?.fc_max), calorias: num(r?.calorias),
+      parciais: (r?.parciais || []).map((x, i) => ({ n: x.n ?? i + 1, dist_km: num(x.dist_km) ?? 1, pace: x.pace || null, fc: num(x.fc) })),
+    };
+    renderResForm();
+  } catch (e) {
+    const msg = { cancelled: "", not_granted: "Sem permissão para usar o Claude nesta página.", rate_limited: "Muitas leituras seguidas. Tente em alguns minutos.", image_rejected: "Não consegui abrir essa imagem. Tente outro print (JPG ou PNG).", invalid_json: "Não consegui ler os números desse print. Tente um print mais nítido ou digite os números." }[e?.code];
+    st().textContent = msg ?? "A leitura falhou. Tente de novo ou digite os números.";
+  } finally { lendoPrint = false; }
 }
 
 /* ---------- dieta ---------- */
@@ -483,7 +655,7 @@ function render() {
   renderPlano(); renderDieta(); renderPeso(); renderCal();
   if (document.activeElement !== $("notas")) $("notas").value = registros[sel]?.notas || "";
 }
-function irPara(k) { sel = k; rascunho = null; renderRascunho(); $("status").textContent = ""; render(); }
+function irPara(k) { sel = k; rascunho = null; resRascunho = null; renderRascunho(); $("status").textContent = ""; render(); }
 $("prev").onclick = () => irPara(addDays(sel, -1));
 $("next").onclick = () => irPara(addDays(sel, 1));
 $("gotoday").onclick = () => irPara(hojeISO());

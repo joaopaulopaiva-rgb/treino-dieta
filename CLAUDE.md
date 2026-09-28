@@ -46,7 +46,10 @@ Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo
      "origem": "painel|claude", "pendente": false,
      "itens": [{"alimento": "Ovo inteiro cozido", "qtd": "2 un (100 g)", "kcal": 146, "carb_g": 1, "prot_g": 13, "gord_g": 10}]}
   ],
-  "treino_feito": {"corrida": true, "musculacao": false, "obs": "texto livre"},
+  "treino_feito": {"corrida": true, "musculacao": false, "obs": "texto livre",
+    "resultado": {"fonte": "Zepp|Samsung Health|manual|Strava", "distancia_km": 12.04, "tempo": "1:10:12", "pace_medio": "5:50",
+                  "fc_media": 156, "fc_max": 176, "calorias": 890, "salvo_em": "ISO",
+                  "parciais": [{"n": 1, "dist_km": 1, "pace": "6:36", "fc": 138}]}},   // parciais = km ou voltas/tiros
   "notas": ""
 }
 ```
@@ -61,6 +64,7 @@ Ler/escrever com a ferramenta `ArtifactData` (url acima). O JP lança tanto pelo
 - Mudou o plano ou o perfil → regenerar e republicar com a ferramenta `Artifact` passando `url` acima (nunca publicar sem `url`, senão cria outro painel).
 - Capacidades: `db` (só o dono/editores escrevem) e `sample` (botão "Calcular macros" usa o Claude da própria conta do JP).
 
+- Treino: o card mostra **Previsto x Realizado** lado a lado. O JP pode enviar print do Samsung Health/Zepp (lido pelo `sample` com imagens) ou digitar. Cada parcial é marcada "no alvo / rápido / lento" (±3 s) contra o pace do bloco do plano (por km acumulado; tiros casados pela distância ±12%). Se ele mandar o print na conversa, extrair e gravar em `treino_feito.resultado` no mesmo formato.
 - Peso: o painel tem a seção "Peso da manhã" no topo, com campo de data (padrão = hoje) — permite lançar um dia esquecido. Quando o JP disser o peso na conversa, gravar no dia certo com `peso_hora`.
 
 ## 5. Recomendações
@@ -85,4 +89,4 @@ Caminho: Amazfit → app Zepp → Strava → `.github/workflows/strava.yml` (21:
   4. GitHub → treino-dieta → Settings → Secrets and variables → Actions: `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_AUTH_CODE`.
   5. Actions → Sincronizar Strava → Run workflow (o código expira rápido: rodar logo após o passo 3).
 - O refresh token fica em `data/.strava_token.enc` (criptografado com o client secret). Se der erro de autorização, refazer passos 3–5 apagando esse arquivo.
-- Uso: ao conversar, ler `data/atividades.json` (dar `git pull`), comparar com o planejado em `data/calendario.json` e, se o JP quiser, marcar `treino_feito` no banco do painel.
+- Uso: ao conversar, ler `data/atividades.json` (dar `git pull`), comparar com o planejado em `data/calendario.json` e gravar em `treino_feito.resultado` (fonte "Strava") no banco do painel.
