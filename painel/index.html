@@ -67,10 +67,13 @@ textarea { resize: vertical; min-height: 64px; }
 .blocks .dot { width: 10px; height: 10px; border-radius: 2px; align-self: center; }
 .blocks .pace { font-family: var(--mono); font-size: .85rem; color: var(--muted); white-space: nowrap; }
 .lift { border-top: 1px dashed var(--line); padding-top: 12px; display: grid; gap: 8px; }
-.lift summary { cursor: pointer; font-weight: 600; }
-.lift table { width: 100%; border-collapse: collapse; font-size: .86rem; }
-.lift td { padding: 5px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
-.lift td:nth-child(n+2) { font-family: var(--mono); font-size: .8rem; white-space: nowrap; color: var(--muted); }
+.lift-h { display: flex; justify-content: space-between; align-items: baseline; }
+.lift-t { font-family: var(--display); font-size: 1.35rem; font-weight: 600; line-height: 1.1; }
+.exs { list-style: none; margin: 0; padding: 0; display: grid; }
+.exs label { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 2px; border-bottom: 1px solid var(--line); cursor: pointer; font-size: .92rem; }
+.exs input { width: 20px; height: 20px; accent-color: var(--ok); margin: 0; }
+.exs-r { font-family: var(--mono); font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.exs label.done .exn { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--ok); }
 .tablewrap { overflow-x: auto; }
 .rest { font-family: var(--display); font-size: 1.6rem; color: var(--muted); }
 .done-row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -338,13 +341,25 @@ function renderPlano() {
   }
   if (p.musculacao) {
     const t = MUSC[p.musculacao];
-    html += `<details class="lift" ${p.corrida ? "" : "open"}><summary>${esc(t.nome)}${p.opcional ? " · opcional" : ""}</summary><div class="tablewrap"><table>
-      ${t.exercicios.map((e) => `<tr><td>${e.ordem}. ${esc(e.exercicio)}</td><td>${esc(e.series)} × ${esc(e.reps)}</td><td>${esc(e.carga)}</td><td>${esc(e.descanso)}</td></tr>`).join("")}
-    </table></div></details>`;
+    const feitos = new Set(registros[sel]?.treino_feito?.exercicios_feitos || []);
+    const n = t.exercicios.filter((e) => feitos.has(e.ordem)).length;
+    html += `<div class="lift"><div class="lift-h"><span class="label">Musculação</span><span class="note">${n}/${t.exercicios.length} feitos</span></div>
+      <div class="lift-t">${esc(t.nome)}${p.opcional ? " · opcional" : ""}</div>
+      <ul class="exs">${t.exercicios.map((e) => `<li><label class="${feitos.has(e.ordem) ? "done" : ""}"><input type="checkbox" data-ex="${e.ordem}" ${feitos.has(e.ordem) ? "checked" : ""} ${db ? "" : "disabled"}>
+        <span class="exn">${esc(e.exercicio)}</span><span class="exs-r">${esc(e.series)} × ${esc(e.reps)}</span></label></li>`).join("")}</ul></div>`;
   }
   if (!p.corrida && !p.musculacao) html += `<div class="rest">Descanso</div>`;
   if (p.obs) html += `<div class="note">${esc(p.obs)}</div>`;
   el.innerHTML = html;
+  el.querySelectorAll("[data-ex]").forEach((cb) => cb.onchange = () => {
+    const t = MUSC[p.musculacao], tf = { ...(registros[sel]?.treino_feito || {}) };
+    const set = new Set(tf.exercicios_feitos || []);
+    const o = Number(cb.dataset.ex);
+    cb.checked ? set.add(o) : set.delete(o);
+    tf.exercicios_feitos = t.exercicios.map((e) => e.ordem).filter((x) => set.has(x));
+    if (tf.exercicios_feitos.length === t.exercicios.length) tf.musculacao = true;
+    salvar({ treino_feito: tf });
+  });
 
   const reg = registros[sel] || {};
   const tf = reg.treino_feito || {};
