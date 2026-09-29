@@ -70,10 +70,17 @@ textarea { resize: vertical; min-height: 64px; }
 .lift-h { display: flex; justify-content: space-between; align-items: baseline; }
 .lift-t { font-family: var(--display); font-size: 1.35rem; font-weight: 600; line-height: 1.1; }
 .exs { list-style: none; margin: 0; padding: 0; display: grid; }
-.exs label { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 2px; border-bottom: 1px solid var(--line); cursor: pointer; font-size: .92rem; }
-.exs input { width: 20px; height: 20px; accent-color: var(--ok); margin: 0; }
+.exs li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: .92rem; }
+.exb { display: flex; gap: 6px; }
+.exbtn { width: 34px; height: 34px; padding: 0; border-radius: 8px; font-size: 1rem; line-height: 1; color: var(--muted); }
+.exbtn.ok[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.exbtn.no[aria-pressed="true"] { background: var(--over); border-color: var(--over); color: var(--surface); }
+.exs li.skip .exn { color: var(--over); }
+.skip-tag { font-size: .7rem; font-weight: 600; border-radius: 4px; padding: 0 5px; background: color-mix(in srgb, var(--over) 15%, transparent); color: var(--over); white-space: nowrap; }
+.skip-c { color: var(--over); }
+@media (max-width: 420px) { .exs li { grid-template-columns: minmax(0, 1fr) auto; } .exs-r { grid-column: 1; grid-row: 2; text-align: left; } .exb { grid-column: 2; grid-row: 1 / span 2; } }
 .exs-r { font-family: var(--mono); font-size: .8rem; color: var(--muted); white-space: nowrap; text-align: right; line-height: 1.35; }
-.exs label.done .exn { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--ok); }
+.exs li.done .exn { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--ok); }
 .tablewrap { overflow-x: auto; }
 .rest { font-family: var(--display); font-size: 1.6rem; color: var(--muted); }
 .done-row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -341,23 +348,28 @@ function renderPlano() {
   }
   if (p.musculacao) {
     const t = MUSC[p.musculacao];
-    const feitos = new Set(registros[sel]?.treino_feito?.exercicios_feitos || []);
-    const n = t.exercicios.filter((e) => feitos.has(e.ordem)).length;
-    html += `<div class="lift"><div class="lift-h"><span class="label">Musculação</span><span class="note">${n}/${t.exercicios.length} feitos</span></div>
+    const tf0 = registros[sel]?.treino_feito || {};
+    const feitos = new Set(tf0.exercicios_feitos || []), pulados = new Set(tf0.exercicios_nao_feitos || []);
+    const n = t.exercicios.filter((e) => feitos.has(e.ordem)).length, nx = t.exercicios.filter((e) => pulados.has(e.ordem)).length;
+    html += `<div class="lift"><div class="lift-h"><span class="label">Musculação</span><span class="note">${n}/${t.exercicios.length} feitos${nx ? ` · <span class="skip-c">${nx} não feito${nx > 1 ? "s" : ""}</span>` : ""}</span></div>
       <div class="lift-t">${esc(t.nome)}${p.opcional ? " · opcional" : ""}</div>
-      <ul class="exs">${t.exercicios.map((e) => `<li><label class="${feitos.has(e.ordem) ? "done" : ""}"><input type="checkbox" data-ex="${e.ordem}" ${feitos.has(e.ordem) ? "checked" : ""} ${db ? "" : "disabled"}>
-        <span class="exn">${esc(e.exercicio)}</span><span class="exs-r">${esc(e.series)} × ${esc(e.reps)}<br>${esc(e.carga)} · desc. ${esc(e.descanso)}</span></label></li>`).join("")}</ul></div>`;
+      <ul class="exs">${t.exercicios.map((e) => { const st = feitos.has(e.ordem) ? "done" : pulados.has(e.ordem) ? "skip" : ""; return `<li class="${st}">
+        <span class="exn">${esc(e.exercicio)}${st === "skip" ? ` <span class="skip-tag">não feito</span>` : ""}</span><span class="exs-r">${esc(e.series)} × ${esc(e.reps)}<br>${esc(e.carga)} · desc. ${esc(e.descanso)}</span>
+        <span class="exb"><button type="button" class="exbtn ok" data-ex="${e.ordem}" data-v="done" aria-pressed="${st === "done"}" aria-label="Feito: ${esc(e.exercicio)}" ${db ? "" : "disabled"}>✓</button><button type="button" class="exbtn no" data-ex="${e.ordem}" data-v="skip" aria-pressed="${st === "skip"}" aria-label="Não feito: ${esc(e.exercicio)}" ${db ? "" : "disabled"}>✕</button></span></li>`; }).join("")}</ul></div>`;
   }
   if (!p.corrida && !p.musculacao) html += `<div class="rest">Descanso</div>`;
   if (p.obs) html += `<div class="note">${esc(p.obs)}</div>`;
   el.innerHTML = html;
-  el.querySelectorAll("[data-ex]").forEach((cb) => cb.onchange = () => {
+  el.querySelectorAll("[data-ex]").forEach((b) => b.onclick = () => {
     const t = MUSC[p.musculacao], tf = { ...(registros[sel]?.treino_feito || {}) };
-    const set = new Set(tf.exercicios_feitos || []);
-    const o = Number(cb.dataset.ex);
-    cb.checked ? set.add(o) : set.delete(o);
-    tf.exercicios_feitos = t.exercicios.map((e) => e.ordem).filter((x) => set.has(x));
-    if (tf.exercicios_feitos.length === t.exercicios.length) tf.musculacao = true;
+    const feitos = new Set(tf.exercicios_feitos || []), pulados = new Set(tf.exercicios_nao_feitos || []);
+    const o = Number(b.dataset.ex), ligado = b.getAttribute("aria-pressed") === "true";
+    feitos.delete(o); pulados.delete(o);
+    if (!ligado) (b.dataset.v === "done" ? feitos : pulados).add(o);   // tocar de novo no mesmo botão limpa
+    const ordens = t.exercicios.map((e) => e.ordem);
+    tf.exercicios_feitos = ordens.filter((x) => feitos.has(x));
+    tf.exercicios_nao_feitos = ordens.filter((x) => pulados.has(x));
+    if (tf.exercicios_feitos.length && tf.exercicios_feitos.length + tf.exercicios_nao_feitos.length === ordens.length) tf.musculacao = true;
     salvar({ treino_feito: tf });
   });
 
@@ -583,7 +595,8 @@ function contextoTreino(k) {
     prova: `Meia Maratona PRF em 08/11/2026 (faltam ${diffDays(k, RACE)} dias)`,
     dia: fmtBR(k),
     planejado: { corrida: p.corrida || null, musculacao: p.musculacao ? MUSC[p.musculacao].nome : null },
-    realizado: { corrida_marcada: !!tf.corrida, musculacao_marcada: !!tf.musculacao, resultado: tf.resultado || null, relato: tf.obs || "" },
+    realizado: { corrida_marcada: !!tf.corrida, musculacao_marcada: !!tf.musculacao, resultado: tf.resultado || null, relato: tf.obs || "",
+      exercicios: p.musculacao ? MUSC[p.musculacao].exercicios.map((e) => ({ exercicio: e.exercicio, prescrito: `${e.series} x ${e.reps} @ ${e.carga}`, status: (tf.exercicios_feitos || []).includes(e.ordem) ? "feito" : (tf.exercicios_nao_feitos || []).includes(e.ordem) ? "não feito" : "sem marcação" })) : null },
     alimentacao_do_dia: { consumido: { kcal: r0(tot.kcal), carb_g: r0(tot.carb_g), prot_g: r0(tot.prot_g), gord_g: r0(tot.gord_g) }, meta },
     proximo_treino: prox ? { dia: fmtBR(prox), corrida: CAL[prox].corrida || null, musculacao: CAL[prox].musculacao ? MUSC[CAL[prox].musculacao].nome : null } : null,
   };
